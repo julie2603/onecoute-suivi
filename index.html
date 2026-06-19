@@ -740,84 +740,48 @@ function confirmCancel() {
 
 
 // ══════════════════════════════
-//  GITHUB SYNC
+//  JSONBIN SYNC
 // ══════════════════════════════
-const GITHUB_USER  = 'julie2603';
-const GITHUB_REPO  = 'onecoute-suivi';
-const GITHUB_TOKEN = localStorage.getItem('gh_token') || '';
-const GITHUB_BRANCH = 'main';
-
-function githubFileName(centre) {
-  return 'data-' + centre + '.json';
-}
-
-function githubApiUrl(centre) {
-  return 'https://api.github.com/repos/' + GITHUB_USER + '/' + GITHUB_REPO + '/contents/' + githubFileName(centre);
-}
+const _JB = atob('NmEzNTZlMzNkYTM4ODk1ZGZlZGU5YzJm');
+const _JK = atob('JDJhJDEwJHhTWHpOSk51OFZydGNzbEUyc21Cd2V2Wms0T0pSSzRnOEkvRURqSW9PR2pjNzRaUGVWMzR5');
+const _JURL = 'https://api.jsonbin.io/v3/b';
 
 async function githubLoad(centre) {
   try {
-    const res = await fetch(githubApiUrl(centre), {
-      headers: {
-        'Authorization': 'token ' + GITHUB_TOKEN,
-        'Accept': 'application/vnd.github.v3+json'
-      }
+    const res = await fetch(_JURL + '/' + _JB + '/latest', {
+      headers: { 'X-Master-Key': _JK, 'X-Bin-Meta': 'false' }
     });
-    if(!res.ok) {
-      if(res.status === 404) return null; // fichier pas encore créé
-      throw new Error('GitHub load error: ' + res.status);
-    }
+    if(!res.ok) { console.error('Load error:', res.status); return null; }
     const json = await res.json();
-    const content = JSON.parse(atob(json.content.replace(/\n/g,'')));
-    return { data: content, sha: json.sha };
+    return json[centre] || null;
   } catch(e) {
-    console.error('githubLoad error:', e);
+    console.error('Load error:', e);
     return null;
   }
 }
 
 async function githubSave(centre, data) {
   try {
-    // Récupérer le sha actuel si le fichier existe
-    let sha = null;
-    const existing = await fetch(githubApiUrl(centre), {
-      headers: {
-        'Authorization': 'token ' + GITHUB_TOKEN,
-        'Accept': 'application/vnd.github.v3+json'
-      }
-    });
-    if(existing.ok) {
-      const j = await existing.json();
-      sha = j.sha;
-    }
-
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-    const body = {
-      message: 'Update ' + centre + ' — ' + new Date().toLocaleString('fr-FR'),
-      content,
-      branch: GITHUB_BRANCH
-    };
-    if(sha) body.sha = sha;
-
-    const res = await fetch(githubApiUrl(centre), {
+    let current = {};
+    try {
+      const r = await fetch(_JURL + '/' + _JB + '/latest', {
+        headers: { 'X-Master-Key': _JK, 'X-Bin-Meta': 'false' }
+      });
+      if(r.ok) current = await r.json();
+    } catch(e) {}
+    current[centre] = data;
+    const res = await fetch(_JURL + '/' + _JB, {
       method: 'PUT',
-      headers: {
-        'Authorization': 'token ' + GITHUB_TOKEN,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': _JK },
+      body: JSON.stringify(current)
     });
     if(!res.ok) {
-      const err = await res.json();
-      console.error('githubSave error:', err);
-      showToast('⚠️ Erreur de sauvegarde GitHub');
+      showToast('⚠️ Erreur de sauvegarde (' + res.status + ')');
       return false;
     }
     return true;
   } catch(e) {
-    console.error('githubSave error:', e);
-    showToast('⚠️ Erreur de connexion GitHub');
+    showToast('⚠️ Erreur de connexion');
     return false;
   }
 }
