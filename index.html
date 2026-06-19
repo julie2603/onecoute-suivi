@@ -1,0 +1,2991 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onécoute — Espace de gestion</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F8F7F4; --surface: #FFFFFF; --surface2: #F1EFE8;
+  --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+  --text: #1A1917; --text2: #6B6963; --text3: #9E9B96;
+  --accent: #1D6FA4; --accent-bg: #E6F1FB;
+  --green: #1D9E75; --green-bg: #E1F5EE;
+  --amber: #BA7517; --amber-bg: #FAEEDA;
+  --red: #C0392B; --red-bg: #FCEBEB;
+  --gray-bg: #EDEDEA;
+  --radius: 10px; --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+/* ── LOGIN ── */
+#login-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; background: var(--bg);
+}
+.login-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 40px 36px; width: 100%; max-width: 380px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10); text-align: center;
+}
+.login-logo { font-size: 40px; margin-bottom: 8px; }
+.login-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.login-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+.centre-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.centre-btn {
+  padding: 14px 10px; border: 2px solid var(--border2); border-radius: var(--radius);
+  background: none; cursor: pointer; font-size: 14px; font-weight: 600;
+  color: var(--text2); font-family: inherit; transition: all 0.15s;
+}
+.centre-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.centre-btn.selected { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.pw-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.pw-row input { flex: 1; padding: 10px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; letter-spacing: 2px; }
+.pw-row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,111,164,0.12); }
+.btn-login { width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.12s; }
+.btn-login:hover { background: #185FA5; }
+.login-error { color: var(--red); font-size: 13px; margin-top: 8px; min-height: 18px; }
+
+/* ── APP ── */
+#app-screen { display: none; }
+.header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 24px; display: flex; align-items: center;
+  justify-content: space-between; height: 56px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+.header-logo { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 17px; }
+.centre-badge { font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(29,111,164,0.2); }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.session-info { font-size: 12px; color: var(--text3); }
+.btn-logout { font-size: 12px; padding: 5px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: none; cursor: pointer; color: var(--text2); font-family: inherit; }
+.btn-logout:hover { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+
+/* ── TABS ── */
+.main-tabs { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; padding: 0 24px; gap: 0; }
+.main-tab {
+  padding: 14px 24px; font-size: 14px; font-weight: 600; cursor: pointer;
+  border: none; background: none; color: var(--text2);
+  border-bottom: 3px solid transparent; margin-bottom: -1px;
+  display: flex; align-items: center; gap: 8px; transition: all 0.12s;
+}
+.main-tab:hover { color: var(--text); }
+.main-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.main-tab.active.orl-tab { color: #6D28D9; border-bottom-color: #7C3AED; }
+.tab-badge { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 10px; background: var(--red-bg); color: var(--red); }
+
+/* ── LAYOUT ── */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.page { padding: 24px; max-width: 960px; margin: 0 auto; }
+
+/* ── SIDEBAR PATIENTS ── */
+.patients-layout { display: flex; min-height: calc(100vh - 110px); }
+.patients-sidebar {
+  width: 200px; flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+  padding: 16px 10px;
+  position: sticky; top: 110px; height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+.patients-main { flex: 1; padding: 24px; min-width: 0; }
+.nav-group { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); padding: 4px 10px 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 500;
+  border: none; background: none; width: 100%; text-align: left;
+  transition: background .12s; font-family: inherit;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--accent-bg); color: var(--accent); }
+.nav-item .ni-icon { font-size: 15px; flex-shrink: 0; }
+.nav-item .ni-badge { margin-left: auto; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.ni-badge.red { background: var(--red-bg); color: var(--red); }
+.ni-badge.amber { background: var(--amber-bg); color: var(--amber); }
+.sidebar-hr { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+
+/* sous-sections patients */
+.psec { display: none; }
+.psec.active { display: block; }
+.page-header { margin-bottom: 20px; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.page-title { font-size: 20px; font-weight: 700; }
+.page-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+/* ── STATS ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px; }
+.stats-grid-3 { grid-template-columns: repeat(3,1fr); }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); transition: box-shadow .15s, border-color .15s; }
+.stat-card[onclick]:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); border-color: var(--border2); }
+.stat-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.stat-value { font-size: 26px; font-weight: 700; color: var(--text); }
+.stat-card.green .stat-value { color: var(--green); }
+.stat-card.amber .stat-value { color: var(--amber); }
+.stat-card.red .stat-value { color: var(--red); }
+.stat-card.blue .stat-value { color: var(--accent); }
+
+/* ── CARDS ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 16px; }
+.card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: space-between; }
+
+/* ── PATIENT ROW ── */
+.patient-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 18px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s; border-left: 3px solid transparent;
+}
+.patient-row:last-child { border-bottom: none; }
+.patient-row:hover { background: #FAFAF8; }
+.patient-row.urgent { border-left-color: var(--red); }
+.patient-row.today { border-left-color: var(--amber); }
+.patient-row.rdv { border-left-color: var(--green); }
+.patient-row.waiting { border-left-color: var(--border2); }
+.avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.av-red { background: var(--red-bg); color: var(--red); }
+.av-amber { background: var(--amber-bg); color: var(--amber); }
+.av-green { background: var(--green-bg); color: var(--green); }
+.av-blue { background: var(--accent-bg); color: var(--accent); }
+.av-gray { background: var(--gray-bg); color: var(--text2); }
+.patient-info { flex: 1; min-width: 0; }
+.patient-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.patient-name { font-weight: 600; font-size: 14px; }
+.patient-details { font-size: 12px; color: var(--text2); display: flex; gap: 12px; flex-wrap: wrap; }
+.attempts-row { display: flex; gap: 4px; flex-shrink: 0; }
+.att-dot { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 1px solid var(--border); }
+.att-no { background: var(--amber-bg); }
+.att-msg { background: var(--accent-bg); }
+.att-ok { background: var(--green-bg); }
+.att-ko { background: var(--red-bg); }
+
+/* ── AVOIR ROW ── */
+.avoir-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 18px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s; border-left: 3px solid transparent;
+}
+.avoir-row:last-child { border-bottom: none; }
+.avoir-row:hover { background: #FAFAF8; }
+.avoir-row.attente { border-left-color: var(--amber); }
+.avoir-row.recu { border-left-color: var(--green); }
+.avoir-row.utilise { border-left-color: var(--border2); }
+.fab-logo { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; border: 1px solid var(--border); }
+.montant-val { font-size: 15px; font-weight: 700; flex-shrink: 0; min-width: 90px; text-align: right; }
+
+/* ── BADGE ── */
+.badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.b-red { background: var(--red-bg); color: var(--red); }
+.b-amber { background: var(--amber-bg); color: var(--amber); }
+.b-green { background: var(--green-bg); color: var(--green); }
+.b-gray { background: var(--gray-bg); color: var(--text2); }
+.b-blue { background: var(--accent-bg); color: var(--accent); }
+
+/* ── FILTER ── */
+.filter-row { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.filter-btn { padding: 5px 14px; border: 1px solid var(--border2); border-radius: 20px; background: none; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text2); font-family: inherit; transition: all 0.12s; }
+.filter-btn:hover { background: var(--surface2); }
+.filter-btn.active { background: var(--text); color: white; border-color: var(--text); }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; display: block; }
+input[type=text], input[type=date], input[type=tel], select, textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); font-size: 13px; background: var(--surface);
+  color: var(--text); font-family: inherit; transition: border-color 0.12s;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,111,164,0.12); }
+textarea { min-height: 70px; resize: vertical; }
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn { padding: 8px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; font-family: inherit; transition: all 0.12s; }
+.btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+.btn-primary:hover { background: #185FA5; }
+.btn-secondary { background: none; border-color: var(--border2); color: var(--text); }
+.btn-secondary:hover { background: var(--surface2); }
+.btn-danger { background: none; border-color: var(--red-bg); color: var(--red); }
+.btn-danger:hover { background: var(--red-bg); }
+
+/* ── MODAL ── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius); box-shadow: 0 8px 32px rgba(0,0,0,0.18); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+.modal-header { padding: 18px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-close { background: none; border: none; cursor: pointer; color: var(--text2); font-size: 18px; padding: 2px 6px; border-radius: 4px; }
+.modal-close:hover { background: var(--surface2); }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── OUTCOME ── */
+.outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.outcome-btn { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: none; cursor: pointer; font-size: 13px; color: var(--text); font-family: inherit; text-align: left; transition: all 0.12s; }
+.outcome-btn:hover { background: var(--surface2); }
+.outcome-btn.sel-amber { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+.outcome-btn.sel-blue { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+.outcome-btn.sel-green { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.outcome-btn.sel-red { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+
+/* ── HISTORY ── */
+.history-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.history-item:last-child { border-bottom: none; }
+.history-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; }
+.history-date { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* ── ORL ── */
+  .orl-badge { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;background:#EDE9FE;color:#6D28D9;flex-shrink:0; }
+  .orl-rdv-row { display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;border-left:3px solid #7C3AED; }
+  .orl-rdv-row:last-child { border-bottom:none; }
+  .orl-rdv-row:hover { background:#FAF8FF; }
+  .orl-rdv-row.orl-urgent { border-left-color:var(--red); }
+  .orl-rdv-row.orl-today  { border-left-color:var(--amber); }
+  .orl-rdv-row.orl-done   { border-left-color:var(--border2);background:#FAFAF8; }
+  .av-purple { background:#EDE9FE !important;color:#6D28D9 !important; }
+  .stat-card.purple .stat-value { color:#6D28D9; }
+
+
+  /* ── AVIS GOOGLE ── */
+  .avis-row {
+    display:flex;align-items:center;gap:14px;
+    padding:13px 18px;border-bottom:1px solid var(--border);
+    cursor:pointer;transition:background .1s;border-left:3px solid transparent;
+  }
+  .avis-row:last-child{border-bottom:none;}
+  .avis-row:hover{background:#FAFAF8;}
+  .avis-row.mail-envoye{border-left-color:var(--accent);}
+  .avis-row.relance{border-left-color:var(--amber);}
+  .avis-row.avis-recu{border-left-color:var(--green);}
+  .avis-row.cloture{border-left-color:var(--border2);opacity:.7;}
+  .stars{color:#F59E0B;font-size:14px;letter-spacing:1px;}
+
+  
+  /* ── CR PATIENTS ── */
+  .cr-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .cr-table th { background:var(--surface2); padding:9px 12px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text2); border-bottom:2px solid var(--border); white-space:nowrap; }
+  .cr-table td { padding:8px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .cr-table tr:last-child td { border-bottom:none; }
+  .cr-table tr:hover td { background:#FAFAF8; }
+  .cr-table tr.cr-done td { opacity:.6; }
+  .cr-note-cell { max-width:200px; }
+  .cr-note-urgent { font-weight:700; color:var(--red); background:var(--red-bg); padding:3px 8px; border-radius:4px; font-size:12px; display:inline-block; }
+  .cr-note-normal { color:var(--text2); font-size:12px; font-style:italic; }
+  .cr-check { width:20px; height:20px; cursor:pointer; accent-color:var(--green); }
+  .cr-btn-add { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; background:var(--accent); color:white; border:none; border-radius:var(--radius-sm); cursor:pointer; font-size:13px; font-weight:600; font-family:inherit; }
+  .cr-btn-add:hover { background:#185FA5; }
+  .cr-year-select { font-size:13px; padding:5px 10px; border:1px solid var(--border2); border-radius:var(--radius-sm); background:var(--surface); color:var(--text); font-family:inherit; cursor:pointer; }
+  .cr-filter-btn { padding:5px 12px; border:1px solid var(--border2); border-radius:20px; background:none; cursor:pointer; font-size:12px; font-weight:500; color:var(--text2); font-family:inherit; }
+  .cr-filter-btn.active { background:var(--text); color:white; border-color:var(--text); }
+  .cr-edit-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:14px; padding:2px 6px; border-radius:4px; }
+  .cr-edit-btn:hover { background:var(--surface2); color:var(--text); }
+
+    /* ── MISC ── */
+.empty { text-align: center; padding: 40px; color: var(--text3); font-size: 14px; }
+.section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; margin-top: 4px; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: white; padding: 10px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none; z-index: 2000; }
+.toast.show { opacity: 1; transform: translateY(0); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+@media(max-width:600px) { .stats-grid { grid-template-columns: 1fr 1fr; } .form-row-2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🎧</div>
+    <div class="login-title">Onécoute</div>
+    <div class="login-sub">Sélectionnez votre centre et saisissez votre mot de passe</div>
+    <div class="centre-choice">
+      <button class="centre-btn" id="btn-aix" onclick="selectCentre('aix')">📍 Aix</button>
+      <button class="centre-btn" id="btn-venelles" onclick="selectCentre('venelles')">📍 Venelles</button>
+    </div>
+    <div class="pw-row">
+      <input type="password" id="pw-input" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn btn-primary" onclick="doLogin()" style="padding:10px 16px;white-space:nowrap;">Entrer</button>
+    </div>
+
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app-screen">
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-logo">🎧</div>
+      Onécoute
+      <span class="centre-badge" id="centre-label">—</span>
+    </div>
+    <div class="header-right">
+      <span id="sync-indicator" style="font-size:12px;padding:4px 10px;border-radius:20px;background:var(--surface2);color:var(--text3);transition:all .3s;"></span>
+      <span class="session-info" id="session-info"></span>
+      <button class="btn-logout" onclick="syncNow()" style="margin-right:4px;">🔄 Sync</button>
+      <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </div>
+
+  <div class="main-tabs">
+    <button class="main-tab active" onclick="switchMainTab('patients',this)">
+      👥 Suivi patients
+      <span class="tab-badge" id="tab-patients-badge" style="display:none">0</span>
+    </button>
+    <button class="main-tab" onclick="switchMainTab('avis',this)">
+      ⭐ Avis Google
+      <span class="tab-badge" id="tab-avis-badge" style="display:none">0</span>
+    </button>
+    <button class="main-tab" onclick="switchMainTab('cr',this)">
+      📋 CR Patients
+      <span class="tab-badge" id="tab-cr-badge" style="display:none">0</span>
+    </button>
+    <button class="main-tab" onclick="switchMainTab('avoirs',this)">
+      💶 Suivi avoirs
+      <span class="tab-badge" id="tab-avoirs-badge" style="display:none">0</span>
+    </button>
+
+  </div>
+
+  <!-- ━━━ TAB PATIENTS ━━━ -->
+  <div id="tab-patients" class="tab-content active">
+    <div class="patients-layout">
+
+      <!-- SIDEBAR -->
+      <aside class="patients-sidebar">
+        <div class="nav-group">Vue</div>
+        <button class="nav-item active" onclick="switchPsec('dashboard',this)">
+          <span class="ni-icon">📊</span> Tableau de bord
+        </button>
+        <button class="nav-item" onclick="switchPsec('liste',this)">
+          <span class="ni-icon">👥</span> Tous les patients
+          <span class="ni-badge amber" id="nb-total" style="display:none">0</span>
+        </button>
+
+        <hr class="sidebar-hr">
+        <div class="nav-group">Actions</div>
+        <button class="nav-item" onclick="openPatientModal(null)">
+          <span class="ni-icon">➕</span> Ajouter patient
+        </button>
+        <hr class="sidebar-hr">
+        <div class="nav-group">Info</div>
+        <button class="nav-item" onclick="switchPsec('protocole',this)">
+          <span class="ni-icon">📋</span> Protocole
+        </button>
+        <button class="nav-item" onclick="exportCSV()">
+          <span class="ni-icon">📥</span> Export CSV
+        </button>
+
+      </aside>
+
+      <!-- MAIN -->
+      <div class="patients-main">
+
+                <!-- DASHBOARD -->
+        <div id="psec-dashboard" class="psec active">
+          <!-- STATS -->
+          <div class="stats-grid" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr);">
+            <div class="stat-card amber" onclick="goToFilter('today')" style="cursor:pointer;"><div class="stat-label">📅 À appeler aujourd'hui</div><div class="stat-value" id="s-today">0</div></div>
+            <div class="stat-card blue" onclick="goToFilter('waiting')" style="cursor:pointer;"><div class="stat-label">📞 Rappels à venir</div><div class="stat-value" id="s-total">0</div></div>
+            <div class="stat-card green" onclick="goToFilter('rdv')" style="cursor:pointer;"><div class="stat-label">✅ RDV pris</div><div class="stat-value" id="s-rdv">0</div></div>
+            <div class="stat-card" style="border-top:3px solid #7C3AED;cursor:pointer;" onclick="switchPsec('orl',document.querySelector('.nav-item[onclick*=orl]'))"><div class="stat-label" style="color:#6D28D9;">🏥 Rappels ORL à venir</div><div class="stat-value" id="s-orl-today" style="color:#6D28D9;">0</div></div>
+          </div>
+
+          <!-- À appeler aujourd'hui -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header">📞 À appeler aujourd'hui <span id="prio-count" style="font-size:12px;color:var(--text2);font-weight:400;"></span></div>
+            <div id="prio-list"></div>
+          </div>
+
+          <!-- Rappels à venir groupés par mois -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header">🗓️ Rappels à venir <span id="upcoming-count" style="font-size:12px;color:var(--text2);font-weight:400;"></span></div>
+            <div id="upcoming-list"></div>
+          </div>
+
+          <!-- Vue d'ensemble -->
+          <div class="card">
+            <div class="card-header">📈 Vue d'ensemble du suivi</div>
+            <div id="overview-content" style="padding:16px;"></div>
+          </div>
+        </div>
+        <!-- LISTE -->
+        <div id="psec-liste" class="psec">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+            <div>
+              <div style="font-size:18px;font-weight:700;">Gestion des patients</div>
+              <div style="font-size:13px;color:var(--text2);margin-top:2px;">Triés par ancienneté — les plus à risque en premier</div>
+            </div>
+            <button class="btn btn-primary" style="padding:7px 16px;font-size:13px;" onclick="openPatientModal(null)">+ Ajouter</button>
+          </div>
+          <div class="filter-row">
+            <button class="filter-btn active" onclick="setFilter('today',this)">Aujourd'hui</button>
+            <button class="filter-btn" onclick="setFilter('waiting',this)">Rappels à venir</button>
+            <button class="filter-btn" onclick="setFilter('rdv',this)">RDV pris</button>
+            <button class="filter-btn" onclick="setFilter('closed',this)">Clôturés</button>
+          </div>
+          <div class="card"><div id="all-list"></div></div>
+        </div>
+
+        <!-- URGENTS -->
+        <div id="psec-urgents" class="psec">
+          <div style="font-size:18px;font-weight:700;margin-bottom:16px;">🔴 Patients urgents</div>
+          <div class="card"><div id="urgent-list"></div></div>
+        </div>
+
+        <!-- RDV -->
+        <div id="psec-rdv" class="psec">
+          <div style="font-size:18px;font-weight:700;margin-bottom:16px;">✅ RDV pris</div>
+          <div class="card"><div id="rdv-list"></div></div>
+        </div>
+
+
+        <!-- ORL -->
+        <div id="psec-orl" class="psec">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+            <div>
+              <div style="font-size:18px;font-weight:700;">🏥 Rendez-vous ORL</div>
+              <div style="font-size:13px;color:var(--text2);margin-top:2px;">Suivi des patients orientés vers un ORL — rappels avant le rendez-vous</div>
+            </div>
+            <button class="btn btn-primary" style="padding:7px 16px;font-size:13px;" onclick="openOrlModal(null)">+ Nouveau RDV ORL</button>
+          </div>
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+            <div class="stat-card purple"><div class="stat-label">🏥 À venir</div><div class="stat-value" id="orl-stat-upcoming">0</div></div>
+            <div class="stat-card red"><div class="stat-label">⚠️ Urgents (&le;3j)</div><div class="stat-value" id="orl-stat-urgent">0</div></div>
+            <div class="stat-card green"><div class="stat-label">✅ Rappel effectué</div><div class="stat-value" id="orl-stat-rappel">0</div></div>
+          </div>
+          <div class="filter-row" id="orl-filter-row">
+            <button class="filter-btn active" onclick="setOrlFilter('all',this)">Tous</button>
+            <button class="filter-btn" onclick="setOrlFilter('upcoming',this)">À venir</button>
+            <button class="filter-btn" onclick="setOrlFilter('done',this)">Passés</button>
+            <button class="filter-btn" onclick="setOrlFilter('cancelled',this)">Annulés</button>
+          </div>
+          <div class="card"><div id="orl-list"></div></div>
+        </div>
+        <!-- PROTOCOLE -->
+        <div id="psec-protocole" class="psec">
+          <div style="font-size:18px;font-weight:700;margin-bottom:16px;">📋 Protocole de suivi</div>
+
+          <div class="card" style="padding:20px;">
+            <div style="font-weight:600;margin-bottom:14px;">📞 Protocole en 3 étapes</div>
+            <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">1</div>
+              <div style="font-size:13px;color:var(--text2);line-height:1.6;padding-top:3px;"><strong style="color:var(--text)">1er appel (J0 à J+3)</strong><br>Appel de courtoisie. Pas de réponse : laisser un message bienveillant si messagerie disponible. Programmer rappel à J+5.</div>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">2</div>
+              <div style="font-size:13px;color:var(--text2);line-height:1.6;padding-top:3px;"><strong style="color:var(--text)">2e appel (J+5 à J+7)</strong><br>Ne pas laisser de 2e message. Si contact : prise de nouvelles sincère, sans pression. Programmer à J+14 si toujours en réflexion.</div>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:0;align-items:flex-start;">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">3</div>
+              <div style="font-size:13px;color:var(--text2);line-height:1.6;padding-top:3px;"><strong style="color:var(--text)">3e appel (J+14 à J+21)</strong><br>Dernier essai. Si toujours pas de réponse : noter "Injoignable" et programmer relance à 3 mois.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:20px;margin-top:0;">
+            <div style="font-weight:600;margin-bottom:10px;">🗣️ Exemple de message vocal</div>
+            <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--text2);line-height:1.7;font-style:italic;border-left:3px solid var(--accent);">
+              "Bonjour [Prénom], c'est [Prénom] du cabinet Onécoute. Je vous appelle simplement pour prendre de vos nouvelles suite à notre rendez-vous. N'hésitez pas à me rappeler si vous avez des questions. Belle journée !"
+            </div>
+          </div>
+
+          <div class="card" style="padding:20px;margin-top:0;">
+            <div style="font-weight:600;margin-bottom:10px;">✅ Règles d'or</div>
+            <ul style="list-style:none;font-size:13px;color:var(--text2);line-height:2;">
+              <li>✓ &nbsp;Maximum 3 tentatives rapprochées avant d'espacer</li>
+              <li>✓ &nbsp;Toujours noter l'heure pour varier les créneaux</li>
+              <li>✓ &nbsp;"Je réfléchis encore" → programmer à 1 mois minimum</li>
+              <li>✓ &nbsp;Refus explicite → clôturer, ne plus relancer (RGPD)</li>
+              <li>✓ &nbsp;Appels en semaine, 9h-12h ou 14h-17h uniquement</li>
+              <li>✓ &nbsp;Ton bienveillant — prise de nouvelles, pas relance commerciale</li>
+            </ul>
+          </div>
+        </div>
+
+      </div><!-- /patients-main -->
+    </div><!-- /patients-layout -->
+  </div>
+
+  <!-- ━━━ TAB AVIS GOOGLE ━━━ -->
+  <div id="tab-avis" class="tab-content">
+    <div class="page">
+
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-top:4px;margin-bottom:20px;">
+        <div class="stat-card blue"><div class="stat-label">📧 Mails envoyés</div><div class="stat-value" id="avis-stat-mail">0</div></div>
+        <div class="stat-card amber"><div class="stat-label">🔄 En attente/relance</div><div class="stat-value" id="avis-stat-attente">0</div></div>
+        <div class="stat-card green"><div class="stat-label">⭐ Avis reçus</div><div class="stat-value" id="avis-stat-recu">0</div></div>
+        <div class="stat-card"><div class="stat-label">⭐ Note moyenne</div><div class="stat-value" id="avis-stat-note" style="font-size:20px;">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          ⭐ Suivi des demandes d'avis Google
+          <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;" onclick="openAvisModal(null)">+ Nouvelle demande</button>
+        </div>
+        <div style="padding:12px 18px 0;">
+          <div class="filter-row" id="avis-filter-row">
+            <button class="filter-btn active" onclick="setAvisFilter('all',this)">Tous</button>
+            <button class="filter-btn" onclick="setAvisFilter('actif',this)">En cours</button>
+            <button class="filter-btn" onclick="setAvisFilter('avis-recu',this)">Avis reçus</button>
+            <button class="filter-btn" onclick="setAvisFilter('cloture',this)">Clôturés</button>
+          </div>
+        </div>
+        <div id="avis-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ━━━ TAB CR PATIENTS ━━━ -->
+  <div id="tab-cr" class="tab-content">
+    <div class="page">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+        <div>
+          <div style="font-size:20px;font-weight:700;">📋 Comptes-rendus patients</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px;">Suivi des CR à envoyer aux médecins</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button class="cr-filter-btn active" id="cr-f-todo" onclick="setCrFilter('todo',this)">À faire</button>
+          <button class="cr-filter-btn" id="cr-f-all" onclick="setCrFilter('all',this)">En cours</button>
+          <button class="cr-filter-btn" id="cr-f-done" onclick="setCrFilter('done',this)">Envoyés</button>
+          <button class="cr-btn-add" onclick="openCrModal(null)">+ Nouveau CR</button>
+        </div>
+      </div>
+
+      <!-- Stats cards — même design que les autres onglets -->
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="stat-card" style="cursor:pointer;background:var(--red-bg);border-top:3px solid var(--red);" onclick="goToCrFilter('todo')" title="Voir les CR à faire">
+          <div class="stat-label" style="color:var(--red);">📋 CR à faire</div>
+          <div class="stat-value" style="color:var(--red);" id="cr-stat-orl-todo">0</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer;background:var(--amber-bg);border-top:3px solid var(--amber);" onclick="goToCrFilter('encours')" title="Voir les CR en cours">
+          <div class="stat-label" style="color:var(--amber);">📤 CR en cours</div>
+          <div class="stat-value" style="color:var(--amber);" id="cr-stat-med-todo">0</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer;background:var(--green-bg);border-top:3px solid var(--green);" onclick="goToCrFilter('done')" title="Voir les CR envoyés">
+          <div class="stat-label" style="color:var(--green);">✅ Envoyés</div>
+          <div class="stat-value" style="color:var(--green);" id="cr-stat-done">0</div>
+        </div>
+      </div>
+
+      <div class="card" style="overflow-x:auto;">
+        <table class="cr-table" id="cr-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Date fact.</th>
+              <th>ORL</th>
+              <th style="text-align:center;width:60px;">CR ORL</th>
+              <th>Généraliste</th>
+              <th style="text-align:center;width:60px;">CR MG</th>
+              <th>⚠️ Note</th>
+              <th style="width:40px;"></th>
+            </tr>
+          </thead>
+          <tbody id="cr-tbody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ━━━ TAB AVOIRS ━━━ -->
+  <div id="tab-avoirs" class="tab-content">
+    <div class="page">
+
+      <!-- Header avec sélecteur d'année -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+        <div>
+          <div style="font-size:20px;font-weight:700;">💶 Suivi des avoirs</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px;">Erreurs de facturation et avoirs fabricants</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <select class="cr-year-select" id="av-year-select" onchange="renderAvoirs()"></select>
+          <button class="btn btn-primary" style="padding:7px 16px;font-size:13px;" onclick="openAvoirModal(null)">+ Nouvel avoir</button>
+        </div>
+      </div>
+
+      <!-- Stats cards — même design que les autres onglets -->
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="stat-card amber">
+          <div class="stat-label">📨 Signalés / En attente</div>
+          <div class="stat-value" id="av-attente">0</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #6D28D9;">
+          <div class="stat-label" style="color:#6D28D9;">📋 À pointer</div>
+          <div class="stat-value" id="av-recu" style="color:#6D28D9;">0</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">💶 Montant en attente</div>
+          <div class="stat-value" id="av-montant">0 €</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          Avoirs <span id="av-year-label" style="font-weight:400;color:var(--text2);font-size:13px;"></span>
+        </div>
+        <div style="padding:12px 18px 0;">
+          <div class="filter-row" id="av-filter-row">
+            <button class="filter-btn active" onclick="setAvoirFilter('all',this)">Tous</button>
+            <button class="filter-btn" onclick="setAvoirFilter('attente',this)">En attente</button>
+            <button class="filter-btn" onclick="setAvoirFilter('recu',this)">Reçus</button>
+          </div>
+        </div>
+        <div id="avoirs-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /app-screen -->
+
+<!-- ── MODAL PATIENT ── -->
+<div class="modal-overlay" id="modal-patient">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="mp-title">Fiche patient</div>
+      <button class="modal-close" onclick="closeModal('modal-patient')">✕</button>
+    </div>
+    <div class="modal-body" id="mp-body"></div>
+    <div class="modal-footer" id="mp-footer"></div>
+  </div>
+</div>
+
+<!-- ── MODAL AVOIR ── -->
+<div class="modal-overlay" id="modal-avoir">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="ma-title">Avoir fabricant</div>
+      <button class="modal-close" onclick="closeModal('modal-avoir')">✕</button>
+    </div>
+    <div class="modal-body" id="ma-body"></div>
+    <div class="modal-footer" id="ma-footer"></div>
+  </div>
+</div>
+
+<!-- ── MODAL ORL ── -->
+<div class="modal-overlay" id="modal-orl">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-orl-title">Nouveau RDV ORL</div>
+      <button class="modal-close" onclick="closeOrlModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-orl-body"></div>
+    <div class="modal-footer" id="modal-orl-footer"></div>
+  </div>
+</div>
+
+<!-- ── MODAL AVIS GOOGLE ── -->
+<div class="modal-overlay" id="modal-avis">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="avis-modal-title">Nouvelle demande d'avis</div>
+      <button class="modal-close" onclick="closeModal('modal-avis')">✕</button>
+    </div>
+    <div class="modal-body" id="avis-modal-body"></div>
+    <div class="modal-footer" id="avis-modal-footer"></div>
+  </div>
+</div>
+
+<!-- ── MODAL CR PATIENT ── -->
+<div class="modal-overlay" id="modal-cr">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="cr-modal-title">Nouveau CR patient</div>
+      <button class="modal-close" onclick="closeModal('modal-cr')">✕</button>
+    </div>
+    <div class="modal-body" id="cr-modal-body"></div>
+    <div class="modal-footer" id="cr-modal-footer"></div>
+  </div>
+</div>
+
+<!-- ── MODAL CONFIRMATION ── -->
+<div class="modal-overlay" id="modal-confirm" style="z-index:2000;">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header">
+      <div class="modal-title" id="confirm-title">Confirmer</div>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-message" style="font-size:14px;color:var(--text2);"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="confirmCancel()">Annuler</button>
+      <button class="btn btn-danger" id="confirm-ok-btn" onclick="confirmOk()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ── MODAL CONFIRMATION ──────────────────────────────────────────
+let _confirmCallback = null;
+function showConfirm(title, message, callback) {
+  _confirmCallback = callback;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('modal-confirm').classList.add('open');
+}
+function confirmOk() {
+  document.getElementById('modal-confirm').classList.remove('open');
+  if(_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+}
+function confirmCancel() {
+  document.getElementById('modal-confirm').classList.remove('open');
+  _confirmCallback = null;
+}
+
+
+// ══════════════════════════════
+//  GITHUB SYNC
+// ══════════════════════════════
+const GITHUB_USER  = 'julie2603';
+const GITHUB_REPO  = 'onecoute-suivi';
+const GITHUB_TOKEN = localStorage.getItem('gh_token') || '';
+const GITHUB_BRANCH = 'main';
+
+function githubFileName(centre) {
+  return 'data-' + centre + '.json';
+}
+
+function githubApiUrl(centre) {
+  return 'https://api.github.com/repos/' + GITHUB_USER + '/' + GITHUB_REPO + '/contents/' + githubFileName(centre);
+}
+
+async function githubLoad(centre) {
+  try {
+    const res = await fetch(githubApiUrl(centre), {
+      headers: {
+        'Authorization': 'token ' + GITHUB_TOKEN,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    if(!res.ok) {
+      if(res.status === 404) return null; // fichier pas encore créé
+      throw new Error('GitHub load error: ' + res.status);
+    }
+    const json = await res.json();
+    const content = JSON.parse(atob(json.content.replace(/\n/g,'')));
+    return { data: content, sha: json.sha };
+  } catch(e) {
+    console.error('githubLoad error:', e);
+    return null;
+  }
+}
+
+async function githubSave(centre, data) {
+  try {
+    // Récupérer le sha actuel si le fichier existe
+    let sha = null;
+    const existing = await fetch(githubApiUrl(centre), {
+      headers: {
+        'Authorization': 'token ' + GITHUB_TOKEN,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    if(existing.ok) {
+      const j = await existing.json();
+      sha = j.sha;
+    }
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+    const body = {
+      message: 'Update ' + centre + ' — ' + new Date().toLocaleString('fr-FR'),
+      content,
+      branch: GITHUB_BRANCH
+    };
+    if(sha) body.sha = sha;
+
+    const res = await fetch(githubApiUrl(centre), {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token ' + GITHUB_TOKEN,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if(!res.ok) {
+      const err = await res.json();
+      console.error('githubSave error:', err);
+      showToast('⚠️ Erreur de sauvegarde GitHub');
+      return false;
+    }
+    return true;
+  } catch(e) {
+    console.error('githubSave error:', e);
+    showToast('⚠️ Erreur de connexion GitHub');
+    return false;
+  }
+}
+
+// ══════════════════════════════
+//  AUTH & SESSION
+// ══════════════════════════════
+const CENTRES = {
+  aix:      { label:'Aix',      pw:'AIX2026',  key:'onecoute_aix'      },
+  venelles: { label:'Venelles', pw:'VEN2026',  key:'onecoute_venelles' }
+};
+const SESSION_DURATION = 9 * 60 * 60 * 1000; // 9 heures
+let currentCentre = null;
+let sessionTimer = null;
+
+function selectCentre(c) {
+  currentCentre = c;
+  document.querySelectorAll('.centre-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('btn-' + c).classList.add('selected');
+  document.getElementById('pw-input').focus();
+  document.getElementById('login-error').textContent = '';
+}
+
+function doLogin() {
+  if (!currentCentre) { document.getElementById('login-error').textContent = 'Veuillez choisir un centre.'; return; }
+  const pw = document.getElementById('pw-input').value.trim();
+  if (pw !== CENTRES[currentCentre].pw) { document.getElementById('login-error').textContent = 'Mot de passe incorrect.'; return; }
+
+  const expires = Date.now() + SESSION_DURATION;
+  sessionStorage.setItem('oc_centre', currentCentre);
+  sessionStorage.setItem('oc_expires', expires);
+  startApp(currentCentre);
+}
+
+function checkSession() {
+  const c = sessionStorage.getItem('oc_centre');
+  const exp = parseInt(sessionStorage.getItem('oc_expires') || '0');
+  if (c && exp > Date.now()) { startApp(c); return true; }
+  sessionStorage.removeItem('oc_centre');
+  sessionStorage.removeItem('oc_expires');
+  return false;
+}
+
+function doLogout() {
+  sessionStorage.removeItem('oc_centre');
+  sessionStorage.removeItem('oc_expires');
+  clearInterval(sessionTimer);
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('login-error').textContent = '';
+  document.querySelectorAll('.centre-btn').forEach(b => b.classList.remove('selected'));
+  currentCentre = null;
+}
+
+async function startApp(centre) {
+  currentCentre = centre;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('centre-label').textContent = CENTRES[centre].label;
+  await loadData();
+  autoUpdateStatuses();
+  renderAll();
+  startSessionCountdown();
+  setTimeout(demanderPermissionEtNotifier, 1200);
+  initAvYearSelect();
+}
+
+function startSessionCountdown() {
+  clearInterval(sessionTimer);
+  sessionTimer = setInterval(() => {
+    const exp = parseInt(sessionStorage.getItem('oc_expires') || '0');
+    const remaining = exp - Date.now();
+    if (remaining <= 0) { doLogout(); return; }
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    document.getElementById('session-info').textContent = `Session : ${h}h${String(m).padStart(2,'0')}`;
+  }, 10000);
+  // Affichage immédiat
+  const exp = parseInt(sessionStorage.getItem('oc_expires') || '0');
+  const remaining = exp - Date.now();
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  document.getElementById('session-info').textContent = `Session : ${h}h${String(m).padStart(2,'0')}`;
+}
+
+// ══════════════════════════════
+//  STORAGE
+// ══════════════════════════════
+let patients = [];
+let avoirs   = [];
+
+function storageKey(type) { return CENTRES[currentCentre].key + '_' + type; }
+
+async function loadData() {
+  showSyncIndicator('Chargement des données...');
+  try {
+    const result = await githubLoad(currentCentre);
+    if(result) {
+      patients   = result.patients   || [];
+      avoirs     = result.avoirs     || [];
+      orlRdvs    = result.orlRdvs    || [];
+      avisGoogle = result.avisGoogle || [];
+      crPatients = result.crPatients || [];
+      // Aussi sauvegarder en localStorage comme cache
+      localStorage.setItem(storageKey('patients'), JSON.stringify(patients));
+      localStorage.setItem(storageKey('avoirs'),   JSON.stringify(avoirs));
+      localStorage.setItem(storageKey('orl'),      JSON.stringify(orlRdvs));
+      showSyncIndicator('✅ Données synchronisées', 2000);
+    } else {
+      // Pas encore de données sur GitHub — charger depuis localStorage
+      try { patients = JSON.parse(localStorage.getItem(storageKey('patients'))) || []; } catch(e) { patients = []; }
+      try { avoirs   = JSON.parse(localStorage.getItem(storageKey('avoirs')))   || []; } catch(e) { avoirs = []; }
+      try { orlRdvs  = JSON.parse(localStorage.getItem(storageKey('orl')))      || []; } catch(e) { orlRdvs = []; }
+      if(!patients.length) initSamplePatients();
+      showSyncIndicator('📡 Données locales (hors ligne ?)', 3000);
+    }
+  } catch(e) {
+    // Fallback localStorage
+    try { patients = JSON.parse(localStorage.getItem(storageKey('patients'))) || []; } catch(e2) { patients = []; }
+    try { avoirs   = JSON.parse(localStorage.getItem(storageKey('avoirs')))   || []; } catch(e2) { avoirs = []; }
+    try { orlRdvs  = JSON.parse(localStorage.getItem(storageKey('orl')))      || []; } catch(e2) { orlRdvs = []; }
+    if(!patients.length) initSamplePatients();
+    showSyncIndicator('⚠️ Mode hors ligne', 3000);
+  }
+}
+
+function saveData() {
+  // Sauvegarde locale immédiate
+  localStorage.setItem(storageKey('patients'), JSON.stringify(patients));
+  localStorage.setItem(storageKey('avoirs'),   JSON.stringify(avoirs));
+  localStorage.setItem(storageKey('orl'),      JSON.stringify(orlRdvs));
+  // Sauvegarde GitHub asynchrone
+  const data = { patients, avoirs, orlRdvs, avisGoogle, crPatients };
+  showSyncIndicator('💾 Sauvegarde...');
+  githubSave(currentCentre, data).then(ok => {
+    if(ok) showSyncIndicator('✅ Sauvegardé', 2000);
+  });
+}
+
+function initSamplePatients() {
+  const today = new Date();
+  const fmt = d => d.toISOString().slice(0,10);
+  const sub = (d,n) => { const x=new Date(d); x.setDate(x.getDate()-n); return fmt(x); };
+  const add = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return fmt(x); };
+  patients = [
+    { id:1, name:'Marie Leblanc', phone:'06 12 34 56 78', date:sub(today,14), reason:'Prix — réfléchit encore', notes:'68 ans. Mari également malentendant.', nextCall:sub(today,2), creneau:'Matin (9h-12h)', attempts:[{type:'no-answer',date:sub(today,5),note:'Pas de réponse'},{type:'msg-left',date:sub(today,9),note:'Message laissé'}], status:'urgent' },
+    { id:2, name:'Paul Morin', phone:'06 98 76 54 32', date:sub(today,7), reason:'Peur / appréhension', notes:'Appréhension sur la visibilité des appareils.', nextCall:fmt(today), creneau:'Après-midi (14h-17h)', attempts:[{type:'no-answer',date:sub(today,2),note:'Pas de réponse'}], status:'today' },
+    { id:3, name:'Françoise Petit', phone:'07 11 22 33 44', date:sub(today,5), reason:'Veut consulter un autre audioprothésiste', notes:'Compare plusieurs centres.', nextCall:add(today,3), creneau:'', attempts:[], status:'waiting' },
+    { id:4, name:'André Simon', phone:'06 55 44 33 22', date:sub(today,21), reason:'Convaincu que sa gêne est faible', notes:'A finalement accepté un essai.', nextCall:null, creneau:'', attempts:[{type:'reached',date:sub(today,3),note:'RDV essai pris'}], status:'rdv' }
+  ];
+}
+
+// ══════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════
+function switchMainTab(tab, btn) {
+  document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function getInitials(n) { return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function fmt(str) { if(!str) return ''; return new Date(str+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }
+function daysDiff(str) { if(!str) return null; const n=new Date(); n.setHours(0,0,0,0); return Math.round((new Date(str+'T00:00:00')-n)/86400000); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+let _syncTimer = null;
+function showSyncIndicator(msg, hideAfter) {
+  const el = document.getElementById('sync-indicator');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = msg.includes('✅') ? 'var(--green)' : msg.includes('⚠️') ? 'var(--amber)' : 'var(--text2)';
+  if(_syncTimer) clearTimeout(_syncTimer);
+  if(hideAfter) {
+    _syncTimer = setTimeout(() => { el.textContent = ''; }, hideAfter);
+  }
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+['modal-patient','modal-avoir'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) { if(e.target===this) closeModal(id); });
+});
+
+// ══════════════════════════════
+//  PATIENTS
+// ══════════════════════════════
+let currentFilter = 'today';
+let currentPatientId = null;
+let selectedOutcome = null;
+
+function autoUpdateStatuses() {
+  patients.forEach(p => {
+    if(p.status==='closed'||p.status==='rdv') return;
+    if(!p.nextCall) { p.status='waiting'; return; }
+    const d = daysDiff(p.nextCall);
+    // Un rappel dépassé reste dans "aujourd'hui", pas en "urgent"
+    if(d <= 0) p.status='today';
+    else p.status='waiting';
+  });
+}
+
+function statusBadge(s) {
+  if(s==='urgent') return '<span class="badge b-red">Urgent</span>';
+  if(s==='today')  return '<span class="badge b-amber">Aujourd\'hui</span>';
+  if(s==='rdv')    return '<span class="badge b-green">RDV pris</span>';
+  if(s==='closed') return '<span class="badge b-blue">Clôturé</span>';
+  return '<span class="badge b-gray">En attente</span>';
+}
+
+function avatarClass(s) {
+  return {urgent:'av-red',today:'av-amber',rdv:'av-green',closed:'av-gray'}[s]||'av-blue';
+}
+
+function attDot(type) {
+  const m = {
+    'no-answer':'<div class="att-dot att-no" title="Pas de réponse">📵</div>',
+    'msg-left' :'<div class="att-dot att-msg" title="Message laissé">💬</div>',
+    'reached'  :'<div class="att-dot att-ok"  title="Contact établi">✅</div>',
+    'refused'  :'<div class="att-dot att-ko"  title="A décliné">🚫</div>'
+  };
+  return m[type]||'';
+}
+
+function nextCallLabel(p) {
+  if(!p.nextCall) return '';
+  const d = daysDiff(p.nextCall);
+  const dateStr = new Date(p.nextCall+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  const dateShort = fmt(p.nextCall);
+  if(d < 0) return `<span style="color:var(--red);font-weight:600;">⚠️ Rappel en retard de ${Math.abs(d)} jour${Math.abs(d)>1?'s':''} — prévu le ${dateStr}</span>`;
+  if(d===0)  return `<span style="color:var(--amber);font-weight:600;">📞 À appeler AUJOURD'HUI</span>`;
+  if(d===1)  return `<span style="color:var(--amber);font-weight:600;">📞 À appeler DEMAIN — ${dateStr}</span>`;
+  if(d<=3)   return `<span style="color:var(--accent);font-weight:500;">📞 Rappel dans ${d} jours — le ${dateStr}</span>`;
+  return `<span style="color:var(--text2);">📞 Rappel prévu le ${dateStr}</span>`;
+}
+
+function renderPatientRow(p) {
+  const atts = (p.attempts||[]).slice(0,4).map(a=>attDot(a.type)).join('');
+  const rappelHtml = p.nextCall ? `<div style="margin-top:5px;font-size:13px;">${nextCallLabel(p)}</div>` : '';
+  const metaHtml = [p.reason, p.creneau?'🕐 '+p.creneau:''].filter(Boolean);
+
+  // Ancienneté et niveau de relance
+  const nbTentatives = (p.attempts||[]).length;
+  const relanceColor = nbTentatives===0?'var(--green)':nbTentatives===1?'var(--amber)':'var(--red)';
+  const relanceLabel = nbTentatives===0?'Pas encore contacté':nbTentatives===1?'1 tentative':nbTentatives+' tentatives';
+  const relanceDot = `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;border-radius:10px;background:${relanceColor}20;color:${relanceColor};font-weight:600;">${relanceLabel}</span>`;
+
+  let ancienneteHtml = '';
+  if(p.date && p.status !== 'rdv' && p.status !== 'closed') {
+    const jours = Math.round((new Date() - new Date(p.date+'T00:00:00')) / 86400000);
+    const ancColor = jours > 30 ? 'var(--red)' : jours > 15 ? 'var(--amber)' : 'var(--text3)';
+    ancienneteHtml = `<span style="font-size:11px;color:${ancColor};">🗓️ ${jours}j de suivi</span>`;
+  }
+
+  return `<div class="patient-row ${p.status}" onclick="openPatientModal(${p.id})">
+    <div class="avatar ${avatarClass(p.status)}">${getInitials(p.name)}</div>
+    <div class="patient-info">
+      <div class="patient-name-row"><span class="patient-name">${p.name}</span>${statusBadge(p.status)}${relanceDot}${ancienneteHtml?'&nbsp;'+ancienneteHtml:''}</div>
+      <div class="patient-details">${metaHtml.map(d=>`<span>${d}</span>`).join('')}</div>
+      ${rappelHtml}
+    </div>
+    <div class="attempts-row">${atts}</div>
+    <div style="font-size:12px;color:var(--text3);flex-shrink:0;min-width:80px;text-align:right">${p.phone}</div>
+  </div>`;
+}
+
+function goToFilter(filter) {
+  // Aller sur la vue liste avec le bon filtre actif
+  const navBtn = document.querySelector('.nav-item[onclick*=liste]');
+  switchPsec('liste', navBtn);
+  // Appliquer le filtre voulu
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  const filterMap = { 'today':"Aujourd'hui", 'waiting':'Rappels à venir', 'urgents':'Urgents', 'rdv':'RDV pris' };
+  // trouver et activer le bon bouton filtre
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    if(b.textContent.trim() === (filterMap[filter]||'Tous')) b.classList.add('active');
+  });
+  // Pour urgents, mapper sur le filtre 'urgent' (sans s)
+  // plus de filtre urgent séparé
+  renderPatients();
+}
+
+function switchPsec(sec, btn) {
+  document.querySelectorAll('.psec').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('psec-' + sec).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(sec==='liste') renderPatients();
+  if(sec==='urgents') renderUrgentList();
+  if(sec==='rdv') renderRdvList();
+  if(sec==='orl') { renderOrlList(); }
+  if(sec==='dashboard') { renderPatients(); renderOrlDashboard(); }
+}
+
+function renderUrgentList() {
+  const list = patients.filter(p => p.status==='today');
+  document.getElementById('urgent-list').innerHTML = list.length
+    ? list.map(renderPatientRow).join('')
+    : '<div class="empty">✅ Aucun appel à faire aujourd\'hui</div>';
+}
+
+function renderRdvList() {
+  const list = patients.filter(p => p.status==='rdv');
+  document.getElementById('rdv-list').innerHTML = list.length
+    ? list.map(renderPatientRow).join('')
+    : '<div class="empty">Aucun RDV pris pour l\'instant</div>';
+}
+
+function exportCSV() {
+  const list = patients.filter(p => p.status!=='closed');
+  const rows = [['Nom','Téléphone','Date du 1er RDV','Motif','Statut','Prochain rappel','Nb tentatives','Créneau','Notes']];
+  list.forEach(p => rows.push([p.name,p.phone,p.date,p.reason,p.status,p.nextCall||'',(p.attempts||[]).length,p.creneau||'',p.notes||'']));
+  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='patients_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('📥 Export CSV téléchargé');
+}
+
+function renderPatients() {
+  // Stats
+  const active = patients.filter(p=>p.status!=='closed');
+  const orlDuJour = orlRdvs.filter(r => {
+    if(r.status==='cancelled'||r.status==='done') return false;
+    const rOrl = r.rappelProgramme && !r.rappelDone && orlDaysDiff(r.rappelProgramme) <= 0;
+    const rNous = !r.rdvNous && r.rappelNousProgramme && orlDaysDiff(r.rappelNousProgramme) <= 0;
+    return rOrl || rNous;
+  }).length;
+  document.getElementById('s-today').textContent = patients.filter(p=>p.status==='today').length + orlDuJour;
+  document.getElementById('s-total').textContent  = patients.filter(p=>p.status==='waiting').length;
+  document.getElementById('s-rdv').textContent    = patients.filter(p=>p.status==='rdv').length;
+
+  // Tab badge
+  const urg = patients.filter(p=>p.status==='today').length;
+  const tb = document.getElementById('tab-patients-badge');
+  tb.textContent = urg; tb.style.display = urg>0?'':'none';
+
+  // Badges sidebar
+  const totCount = patients.filter(p=>p.status==='today').length;
+  const nbT = document.getElementById('nb-total');  if(nbT){nbT.textContent=totCount;nbT.style.display=totCount>0?'':'none';}
+
+  // ── À appeler aujourd'hui ──────────────────────────────────────
+  const prio = patients.filter(p=>p.status==='today');
+  // Une seule ligne par patient ORL — on l'affiche dès qu'un de ses rappels est dû
+  const orlPrio = orlRdvs.filter(r => {
+    if(r.status==='cancelled'||r.status==='done') return false;
+    const rappelOrlDu = r.rappelProgramme && !r.rappelDone && orlDaysDiff(r.rappelProgramme) <= 0;
+    const rappelNousDu = !r.rdvNous && r.rappelNousProgramme && orlDaysDiff(r.rappelNousProgramme) <= 0;
+    return rappelOrlDu || rappelNousDu;
+  });
+
+  const totalPrio = prio.length + orlPrio.length;
+  document.getElementById('prio-count').textContent = totalPrio ? totalPrio+' à appeler' : '';
+
+  // Compteur ORL aujourd'hui dans les stats
+  const orlTotalRappels = orlRdvs.filter(r => {
+    if(r.status==='cancelled'||r.status==='done') return false;
+    return (r.rappelProgramme && !r.rappelDone) || (!r.rdvNous && r.rappelNousProgramme);
+  }).length;
+  const solT = document.getElementById('s-orl-today');
+  if(solT) solT.textContent = orlTotalRappels;
+
+  let prioHtml = '';
+  if(prio.length) {
+    if(orlPrio.length) prioHtml += '<div style="padding:8px 18px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);background:var(--amber-bg);border-bottom:1px solid rgba(186,117,23,.15);">👥 Patients</div>';
+    prioHtml += prio.map(renderPatientRow).join('');
+  }
+  if(orlPrio.length) {
+    prioHtml += '<div style="padding:8px 18px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6D28D9;background:#F5F3FF;border-top:1px solid #DDD6FE;">🏥 RDV ORL — rappeler avant le rendez-vous</div>';
+    prioHtml += orlPrio.map(renderOrlRow).join('');
+  }
+  document.getElementById('prio-list').innerHTML = prioHtml || '<div class="empty">✅ Aucun appel à faire aujourd\'hui !</div>';
+
+  // ── Rappels à venir groupés par mois (patients + ORL) ──────────
+  const upEl = document.getElementById('upcoming-list');
+  if(upEl) {
+    const upPatients = patients.filter(p=>p.status==='waiting'&&p.nextCall)
+      .sort((a,b)=>a.nextCall.localeCompare(b.nextCall));
+    // Une seule ligne par patient ORL — triée sur le prochain rappel à venir
+    const upOrl = orlRdvs.filter(r => {
+      if(r.status==='cancelled'||r.status==='done') return false;
+      const rappelOrlFutur = r.rappelProgramme && !r.rappelDone && orlDaysDiff(r.rappelProgramme) > 0;
+      const rappelNousFutur = !r.rdvNous && r.rappelNousProgramme && orlDaysDiff(r.rappelNousProgramme) > 0;
+      return rappelOrlFutur || rappelNousFutur;
+    }).map(r => {
+      // Clé de tri = le prochain rappel le plus proche
+      const keys = [
+        r.rappelProgramme && !r.rappelDone && orlDaysDiff(r.rappelProgramme) > 0 ? r.rappelProgramme : null,
+        !r.rdvNous && r.rappelNousProgramme && orlDaysDiff(r.rappelNousProgramme) > 0 ? r.rappelNousProgramme : null,
+      ].filter(Boolean);
+      return {...r, _sortKey: keys.sort()[0]};
+    }).sort((a,b)=>a._sortKey.localeCompare(b._sortKey));
+
+    // Fusionner en une timeline par mois
+    const now = new Date();
+    const curMonthKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    const groups = {};
+
+    upPatients.forEach(p => {
+      const mk = p.nextCall.slice(0,7);
+      if(!groups[mk]) groups[mk] = {patients:[],orl:[]};
+      groups[mk].patients.push(p);
+    });
+    upOrl.forEach(r => {
+      const mk = (r._sortKey||r.rappelProgramme||'9999-99').slice(0,7);
+      if(!groups[mk]) groups[mk] = {patients:[],orl:[]};
+      groups[mk].orl.push(r);
+    });
+
+    let upHtml = '';
+    const total = upPatients.length + upOrl.length;
+    document.getElementById('upcoming-count').textContent = total ? total+' rappel'+(total>1?'s':'')+' programmé'+(total>1?'s':'') : '';
+
+    Object.keys(groups).sort().forEach(mk => {
+      const [y,m] = mk.split('-');
+      const mName = new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+      const isCur = mk === curMonthKey;
+      const hStyle = isCur
+        ? 'padding:10px 18px 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);background:var(--accent-bg);border-top:1px solid rgba(29,111,164,.15);display:flex;align-items:center;'
+        : 'padding:10px 18px 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);background:var(--surface2);border-top:1px solid var(--border);display:flex;align-items:center;';
+      const icon = isCur ? '📅 ' : '🗓️ ';
+      const g = groups[mk];
+      const cnt = g.patients.length + g.orl.length;
+      upHtml += '<div style="'+hStyle+'">'+icon+mName.charAt(0).toUpperCase()+mName.slice(1)+'<span style="margin-left:auto;font-size:11px;font-weight:500;opacity:.7;">'+cnt+' rappel'+(cnt>1?'s':'')+'</span></div>';
+      if(g.patients.length) upHtml += g.patients.map(renderPatientRow).join('');
+      if(g.orl.length) {
+        upHtml += '<div style="padding:5px 18px 3px;font-size:11px;font-weight:600;color:#6D28D9;background:#F5F3FF;border-left:3px solid #7C3AED;">🏥 Rappels ORL</div>';
+        upHtml += g.orl.map(renderOrlRow).join('');
+      }
+    });
+
+    upEl.innerHTML = upHtml || '<div class="empty">Aucun rappel programmé à venir</div>';
+  }
+
+  // Liste filtrée
+  let list = patients;
+  if(currentFilter==='today')        list = patients.filter(p=>p.status==='today');
+  else if(currentFilter==='waiting') list = patients.filter(p=>p.status==='waiting');
+  else if(currentFilter==='rdv')     list = patients.filter(p=>p.status==='rdv');
+  else if(currentFilter==='closed')  list = patients.filter(p=>p.status==='closed');
+  else list = patients.filter(p=>p.status!=='closed');
+  // Trier par ancienneté (plus vieux en premier = plus à risque)
+  if(currentFilter !== 'rdv' && currentFilter !== 'closed') {
+    list = [...list].sort((a,b) => (a.date||'9999').localeCompare(b.date||'9999'));
+  }
+
+  // Fusionner avec patients ORL si filtre "all"
+  let finalList = list;
+  let orlRows = '';
+  if(currentFilter === 'all') {
+    const orlUpcoming = orlRdvs.filter(r => orlStatus(r) === 'upcoming' && r.status !== 'cancelled');
+    if(orlUpcoming.length) {
+      orlRows = '<div style="padding:10px 18px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6D28D9;background:#F5F3FF;border-top:1px solid #DDD6FE;">🏥 Patients avec RDV ORL</div>' +
+        orlUpcoming.map(renderOrlRow).join('');
+    }
+  }
+
+  // Rendu groupé par mois pour "Rappels à venir"
+  if(currentFilter === 'waiting') {
+    const now = new Date();
+    const currentMonthKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+
+    // Trier par date de rappel
+    const sorted = [...finalList].filter(p=>p.nextCall).sort((a,b)=>a.nextCall.localeCompare(b.nextCall));
+    const noDate = finalList.filter(p=>!p.nextCall);
+
+    // Grouper par mois
+    const groups = {};
+    sorted.forEach(p => {
+      const mk = p.nextCall.slice(0,7); // "2025-06"
+      if(!groups[mk]) groups[mk] = [];
+      groups[mk].push(p);
+    });
+
+    let html_out = '';
+    Object.keys(groups).sort().forEach(mk => {
+      const [y, m] = mk.split('-');
+      const monthName = new Date(parseInt(y), parseInt(m)-1, 1)
+        .toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+      const isCurrentMonth = mk === currentMonthKey;
+      const headerStyle = isCurrentMonth
+        ? 'padding:10px 18px 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);background:var(--accent-bg);border-top:1px solid rgba(29,111,164,.15);display:flex;align-items:center;gap:6px;'
+        : 'padding:10px 18px 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);background:var(--surface2);border-top:1px solid var(--border);';
+      const icon = isCurrentMonth ? '📅 ' : '🗓️ ';
+      html_out += '<div style="'+headerStyle+'">'+icon+monthName.charAt(0).toUpperCase()+monthName.slice(1)+'<span style="margin-left:auto;font-size:11px;font-weight:500;opacity:.7;">'+groups[mk].length+' patient'+(groups[mk].length>1?'s':'')+'</span></div>';
+      html_out += groups[mk].map(renderPatientRow).join('');
+    });
+
+    if(noDate.length) {
+      html_out += '<div style="padding:10px 18px 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);background:var(--surface2);border-top:1px solid var(--border);">📋 Sans date de rappel</div>';
+      html_out += noDate.map(renderPatientRow).join('');
+    }
+
+    document.getElementById('all-list').innerHTML = html_out || '<div class="empty">Aucun rappel à venir</div>';
+    return;
+  }
+
+  document.getElementById('all-list').innerHTML = (finalList.length
+    ? finalList.map(renderPatientRow).join('')
+    : '<div class="empty">Aucun patient dans cette catégorie</div>')
+    + orlRows;
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPatients();
+}
+
+function openPatientModal(id) {
+  currentPatientId = id;
+  selectedOutcome = null;
+  const p = id ? patients.find(x=>x.id===id) : null;
+  document.getElementById('mp-title').textContent = p ? p.name : 'Nouveau patient';
+
+  if (!p) {
+    // ÉCRAN DE CHOIX
+    document.getElementById('mp-title').textContent = 'Nouveau patient';
+    document.getElementById('mp-body').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 0;">
+        <button onclick="showAddForm('rappel')" style="border:2px solid var(--border2);border-radius:var(--radius);padding:20px 16px;background:none;cursor:pointer;text-align:left;font-family:inherit;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--accent-bg)'" onmouseout="this.style.borderColor='var(--border2)';this.style.background='none'">
+          <div style="font-size:24px;margin-bottom:8px;">📞</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">Ajouter un rappel</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5;">Patient à recontacter — réfléchit encore, compare, a besoin de temps</div>
+        </button>
+        <button onclick="showAddForm('orl')" style="border:2px solid #DDD6FE;border-radius:var(--radius);padding:20px 16px;background:none;cursor:pointer;text-align:left;font-family:inherit;transition:all .15s;" onmouseover="this.style.borderColor='#7C3AED';this.style.background='#F5F3FF'" onmouseout="this.style.borderColor='#DDD6FE';this.style.background='none'">
+          <div style="font-size:24px;margin-bottom:8px;">🏥</div>
+          <div style="font-size:14px;font-weight:700;color:#5B21B6;margin-bottom:4px;">Programmer un RDV ORL</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5;">Patient orienté vers un ORL — avec ou sans RDV chez nous après</div>
+        </button>
+      </div>
+    `;
+    document.getElementById('mp-footer').innerHTML = `
+      <button class="btn btn-secondary" onclick="closeModal('modal-patient')">Annuler</button>
+    `;
+  } else {
+    // FICHE + ENREGISTRER APPEL
+    const hist = (p.attempts||[]).map(a=>`
+      <div class="history-item">
+        <div class="history-dot ${a.type==='no-answer'?'att-no':a.type==='msg-left'?'att-msg':a.type==='reached'?'att-ok':'att-ko'}">${attDot(a.type).replace(/.*>(.*)<.*/,'$1').slice(0,2)}</div>
+        <div><div>${a.note}</div><div class="history-date">${fmt(a.date)} — ${{'no-answer':'Pas de réponse','msg-left':'Message laissé','reached':'Contact établi','refused':'A décliné'}[a.type]||''}</div></div>
+      </div>`).join('') || '<div style="font-size:13px;color:var(--text3)">Aucune tentative</div>';
+
+    document.getElementById('mp-body').innerHTML = `
+      <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;font-size:13px;">
+        <div><strong>Motif :</strong> <span style="color:var(--text2)">${p.reason||'Non précisé'}</span></div>
+        ${p.notes?`<div style="margin-top:4px"><strong>Notes :</strong> <span style="color:var(--text2)">${p.notes}</span></div>`:''}
+        ${p.creneau?`<div style="margin-top:4px"><strong>Créneau :</strong> <span style="color:var(--text2)">${p.creneau}</span></div>`:''}
+      </div>
+      <div class="section-title">Historique (${(p.attempts||[]).length} tentative(s))</div>
+      <div style="margin-bottom:16px;">${hist}</div>
+      <div class="section-title" style="border-top:1px solid var(--border);padding-top:14px;">Résultat de l'appel</div>
+      <div class="outcome-grid">
+        <button class="outcome-btn" onclick="selectOutcome('no-answer',this,'sel-amber')"><span style="font-size:18px">📵</span>Pas de réponse</button>
+        <button class="outcome-btn" onclick="selectOutcome('msg-left',this,'sel-blue')"><span style="font-size:18px">💬</span>Message laissé</button>
+        <button class="outcome-btn" onclick="selectOutcome('reached',this,'sel-green')"><span style="font-size:18px">✅</span>Contact établi</button>
+        <button class="outcome-btn" onclick="selectOutcome('refused',this,'sel-red')"><span style="font-size:18px">🚫</span>A décliné</button>
+      </div>
+
+      <div class="form-group"><label class="form-label">Note</label><textarea id="call-note" placeholder="Humeur du patient, ce qui a été dit..."></textarea></div>
+
+      <!-- Bloc dynamique selon le résultat -->
+      <div id="block-no-answer" style="display:none;">
+        <div class="form-group"><label class="form-label">Reprogrammer le rappel le</label><input type="date" id="next-call-date"></div>
+      </div>
+
+      <div id="block-reached" style="display:none;background:var(--green-bg);border-radius:var(--radius-sm);padding:14px;border:1px solid rgba(29,158,117,.2);">
+        <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:12px;">✅ Contact établi — que s'est-il passé ?</div>
+        <div class="outcome-grid" style="margin-bottom:10px;">
+          <button class="outcome-btn" id="sub-rdv" onclick="selectSub('rdv')" style="background:white;">
+            <span style="font-size:18px">🎉</span><div><div style="font-weight:600">RDV pris</div><div style="font-size:11px;color:var(--text2)">Le patient accepte un rendez-vous</div></div>
+          </button>
+          <button class="outcome-btn" id="sub-recall" onclick="selectSub('recall')" style="background:white;">
+            <span style="font-size:18px">📅</span><div><div style="font-weight:600">Reprogrammer</div><div style="font-size:11px;color:var(--text2)">Il réfléchit encore, rappeler plus tard</div></div>
+          </button>
+        </div>
+        <div id="sub-rdv-block" style="display:none;">
+          <div class="form-group" style="margin-bottom:0;"><label class="form-label">Date du RDV chez nous</label><input type="date" id="rdv-date"></div>
+        </div>
+        <div id="sub-recall-block" style="display:none;">
+          <div class="form-group"><label class="form-label">Raison du report</label>
+            <select id="recall-reason" style="margin-bottom:6px;">
+              <option value="">-- Sélectionner --</option>
+              <option>Réfléchit encore au prix</option>
+              <option>Attend une réponse de sa mutuelle</option>
+              <option>Veut en parler à sa famille</option>
+              <option>Compare avec un autre centre</option>
+              <option>Problème de santé prioritaire</option>
+              <option>Partie en vacances</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;"><label class="form-label">Rappeler le</label><input type="date" id="next-call-date"></div>
+        </div>
+      </div>
+
+      <div id="block-refused" style="display:none;background:var(--red-bg);border-radius:var(--radius-sm);padding:14px;border:1px solid rgba(192,57,43,.15);">
+        <div style="font-size:13px;font-weight:600;color:var(--red);margin-bottom:10px;">🚫 Le patient a décliné — que faire ?</div>
+        <div class="outcome-grid" style="margin-bottom:0;">
+          <button class="outcome-btn" id="sub-close" onclick="selectSub('close')" style="background:white;">
+            <span style="font-size:18px">📁</span><div><div style="font-weight:600">Clôturer le suivi</div><div style="font-size:11px;color:var(--text2)">Refus définitif, ne plus relancer</div></div>
+          </button>
+          <button class="outcome-btn" id="sub-later" onclick="selectSub('later')" style="background:white;">
+            <span style="font-size:18px">⏳</span><div><div style="font-weight:600">Relance à 3 mois</div><div style="font-size:11px;color:var(--text2)">Déclin poli, laisser du temps</div></div>
+          </button>
+        </div>
+      </div>
+    `;
+    document.getElementById('mp-footer').innerHTML = `
+      <button class="btn btn-danger" onclick="deletePatient(${p.id})" data-id="${p.id}">🗑️ Supprimer</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-patient')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveCall()">Enregistrer</button>
+    `;
+  }
+  document.getElementById('modal-patient').classList.add('open');
+}
+
+function selectOutcome(type, btn, cls) {
+  selectedOutcome = type;
+  selectedSub = null;
+  document.querySelectorAll('.outcome-btn').forEach(b=>{ b.className='outcome-btn'; });
+  btn.classList.add(cls);
+  // Cacher tous les blocs
+  ['block-no-answer','block-reached','block-refused'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  ['sub-rdv-block','sub-recall-block'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  ['sub-rdv','sub-recall','sub-close','sub-later'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.className='outcome-btn';
+    if(el) el.style.background='white';
+  });
+  // Afficher le bon bloc
+  if(type==='no-answer'||type==='msg-left') {
+    const b=document.getElementById('block-no-answer'); if(b) b.style.display='block';
+  } else if(type==='reached') {
+    const b=document.getElementById('block-reached'); if(b) b.style.display='block';
+  } else if(type==='refused') {
+    const b=document.getElementById('block-refused'); if(b) b.style.display='block';
+  }
+}
+
+let selectedSub = null;
+function selectSub(sub) {
+  selectedSub = sub;
+  ['sub-rdv','sub-recall','sub-close','sub-later'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.className='outcome-btn'; el.style.background='white'; }
+  });
+  ['sub-rdv-block','sub-recall-block'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  const map={'rdv':'sub-rdv','recall':'sub-recall','close':'sub-close','later':'sub-later'};
+  const btn=document.getElementById(map[sub]);
+  if(btn){ btn.classList.add(sub==='rdv'||sub==='later'?'sel-green':'sel-red'); btn.style.background=''; }
+  if(sub==='rdv')    { const b=document.getElementById('sub-rdv-block');    if(b) b.style.display='block'; }
+  if(sub==='recall') { const b=document.getElementById('sub-recall-block'); if(b) b.style.display='block'; }
+}
+
+function saveCall() {
+  if(!selectedOutcome) { showToast('⚠️ Choisissez un résultat'); return; }
+  const p = patients.find(x=>x.id===currentPatientId);
+  const noteEl = document.getElementById('call-note');
+  let note = noteEl ? noteEl.value.trim() : '';
+  const today = new Date().toISOString().slice(0,10);
+  const labels = {'no-answer':'Pas de réponse','msg-left':'Message laissé','reached':'Contact établi','refused':'A décliné'};
+
+  // Validation des sous-choix obligatoires
+  if(selectedOutcome==='reached' && !selectedSub) { showToast('⚠️ Précisez : RDV pris ou reprogrammer ?'); return; }
+  if(selectedOutcome==='refused' && !selectedSub) { showToast('⚠️ Précisez : clôturer ou relance à 3 mois ?'); return; }
+
+  // Construire la note avec la raison si "recall"
+  if(selectedSub==='recall') {
+    const reason = document.getElementById('recall-reason');
+    if(reason && reason.value) note = (note ? note + ' — ' : '') + reason.value;
+  }
+
+  p.attempts.unshift({type:selectedOutcome, date:today, note:note||labels[selectedOutcome]});
+
+  if(selectedOutcome==='no-answer'||selectedOutcome==='msg-left') {
+    const nc = document.getElementById('next-call-date');
+    if(nc && nc.value) p.nextCall = nc.value;
+    const noAns = (p.attempts||[]).filter(a=>a.type==='no-answer').length;
+    autoUpdateStatuses(); // rappel dépassé = aujourd'hui, jamais urgent
+
+  } else if(selectedOutcome==='reached') {
+    if(selectedSub==='rdv') {
+      p.status='rdv'; p.nextCall=null;
+      const rdvDate = document.getElementById('rdv-date');
+      if(rdvDate && rdvDate.value) note = (note?note+' — ':'') + 'RDV le '+new Date(rdvDate.value+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
+      p.attempts[0].note = note || 'RDV pris';
+      showToast('🎉 RDV pris !');
+    } else if(selectedSub==='recall') {
+      const nc = document.getElementById('next-call-date');
+      if(nc && nc.value) p.nextCall = nc.value;
+      p.status = 'waiting';
+      showToast('📅 Rappel reprogrammé');
+    }
+
+  } else if(selectedOutcome==='refused') {
+    if(selectedSub==='close') {
+      p.status='closed'; p.nextCall=null;
+      showToast('📁 Suivi clôturé');
+    } else if(selectedSub==='later') {
+      const in3months = new Date(); in3months.setMonth(in3months.getMonth()+3);
+      p.nextCall = in3months.toISOString().slice(0,10);
+      p.status='waiting';
+      showToast('⏳ Relance programmée dans 3 mois');
+    }
+  }
+
+  saveData(); closeModal('modal-patient'); renderAll();
+}
+
+
+function showAddForm(type) {
+  document.getElementById('mp-title').textContent = type === 'orl' ? 'Nouveau RDV ORL' : 'Nouveau patient — rappel';
+
+  if(type === 'rappel') {
+    document.getElementById('mp-body').innerHTML = `
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Nom complet *</label><input type="text" id="np-name" placeholder="Jean Dupont"></div>
+        <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="np-phone" placeholder="06 xx xx xx xx"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Date du 1er RDV</label><input type="date" id="np-date"></div>
+        <div class="form-group"><label class="form-label">Créneau préféré</label>
+          <select id="np-creneau"><option value="">Non précisé</option><option>Matin (9h-12h)</option><option>Après-midi (14h-17h)</option><option>Fin de journée (17h-19h)</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Motif du non-appareillage</label>
+        <select id="np-reason"><option value="">-- Sélectionner --</option><option>Prix — réfléchit encore</option><option>Peur / appréhension</option><option>Veut consulter un autre audioprothésiste</option><option>Convaincu que sa gêne est faible</option><option>Proche déconseille</option><option>Attente d'un meilleur remboursement</option><option>Autre</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea id="np-notes" placeholder="Observations, contexte familial..."></textarea></div>
+      <div class="form-group"><label class="form-label">1er rappel prévu le</label><input type="date" id="np-call"></div>
+    `;
+    document.getElementById('mp-footer').innerHTML = `
+      <button class="btn btn-secondary" onclick="openPatientModal(null)">← Retour</button>
+      <button class="btn btn-primary" onclick="saveNewPatient()">Ajouter</button>
+    `;
+
+  } else {
+    // Formulaire ORL direct
+    document.getElementById('mp-body').innerHTML = `
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Nom du patient *</label><input type="text" id="np-name" placeholder="Jean Dupont"></div>
+        <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="np-phone" placeholder="06 xx xx xx xx"></div>
+      </div>
+      <div style="background:#F5F3FF;border-radius:var(--radius-sm);padding:14px;border:1px solid #DDD6FE;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:600;color:#5B21B6;margin-bottom:10px;">🏥 RDV ORL</div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Médecin ORL *</label><input type="text" id="np-orl-doc" placeholder="ex: Dr Martin"></div>
+          <div class="form-group"><label class="form-label">Date du RDV *</label><input type="date" id="np-orl-date" onchange="previewRappelOrl()"></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Heure</label><input type="time" id="np-orl-heure"></div>
+          <div class="form-group"><label class="form-label">Adresse cabinet ORL</label><input type="text" id="np-orl-adresse" placeholder="ex: 12 rue de la Paix, Aix"></div>
+        </div>
+        <div id="np-orl-rappel-preview" style="font-size:12px;color:#6D28D9;margin-top:6px;min-height:18px;"></div>
+      </div>
+      <div style="background:var(--green-bg);border-radius:var(--radius-sm);padding:14px;border:1px solid rgba(29,158,117,.2);">
+        <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:10px;">📅 RDV chez nous après l'ORL <span style="font-size:11px;font-weight:400;color:var(--text2);">(optionnel)</span></div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="np-orl-rdvnous"></div>
+          <div class="form-group"><label class="form-label">Heure</label><input type="time" id="np-orl-rdvnoush"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);">Sans RDV chez nous → un rappel de reprise sera automatiquement programmé J+3 après l'ORL</div>
+      </div>
+    `;
+    document.getElementById('mp-footer').innerHTML = `
+      <button class="btn btn-secondary" onclick="openPatientModal(null)">← Retour</button>
+      <button class="btn btn-primary" style="background:#6D28D9;border-color:#6D28D9;" onclick="saveNewOrlOnly()">Programmer</button>
+    `;
+  }
+}
+
+function saveNewOrlOnly() {
+  const name  = document.getElementById('np-name').value.trim();
+  const phone = document.getElementById('np-phone').value.trim();
+  const doc   = document.getElementById('np-orl-doc').value.trim();
+  const date  = document.getElementById('np-orl-date').value;
+  if(!name||!phone||!doc||!date) { showToast('⚠️ Nom, téléphone, ORL et date requis'); return; }
+  const rdvNous = document.getElementById('np-orl-rdvnous').value;
+  const rappelAuto = calcDateRappelOrl(date);
+  let rappelNousAuto = null;
+  if(!rdvNous) {
+    const d3 = new Date(date+'T00:00:00'); d3.setDate(d3.getDate()+3);
+    if(d3.getDay()===6) d3.setDate(d3.getDate()+2);
+    if(d3.getDay()===0) d3.setDate(d3.getDate()+1);
+    rappelNousAuto = d3.toISOString().slice(0,10);
+  }
+  orlRdvs.unshift({
+    id:Date.now(), patientName:name, phone, orlName:doc, rdvDate:date,
+    heure:document.getElementById('np-orl-heure').value,
+    adresseOrl:document.getElementById('np-orl-adresse').value.trim(),
+    rdvNous, rdvNousHeure:document.getElementById('np-orl-rdvnoush').value,
+    notes:'', status:'upcoming', rappelDone:false, rappelDate:null, rappelNote:'',
+    rappelProgramme:rappelAuto, rappelNousProgramme:rappelNousAuto
+  });
+  saveOrlData();
+  closeModal('modal-patient');
+  renderAll();
+  const rappelStr = new Date(rappelAuto+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  showToast(rdvNous ? '✅ RDV ORL ajouté — rappel le '+rappelStr : '✅ RDV ORL ajouté — 2 rappels programmés');
+}
+
+function toggleOrlForm() {
+  const cb = document.getElementById('np-has-orl');
+  const frm = document.getElementById('np-orl-form');
+  if(cb && frm) frm.style.display = cb.checked ? 'block' : 'none';
+}
+
+function previewRappelOrl() {
+  const dateVal = document.getElementById('np-orl-date').value;
+  const preview = document.getElementById('np-orl-rappel-preview');
+  if(!preview) return;
+  if(!dateVal) { preview.textContent = ''; return; }
+  const rappel = calcDateRappelOrl(dateVal);
+  const rappelStr = new Date(rappel+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  preview.innerHTML = '📞 Rappel automatique programmé le <strong>' + rappelStr + '</strong>';
+}
+
+function saveNewPatient() {
+  const name  = document.getElementById('np-name').value.trim();
+  const phone = document.getElementById('np-phone').value.trim();
+  if(!name||!phone) { showToast('⚠️ Nom et téléphone requis'); return; }
+  const today = new Date().toISOString().slice(0,10);
+  patients.unshift({
+    id:Date.now(), name, phone,
+    date:document.getElementById('np-date').value||today,
+    reason:document.getElementById('np-reason').value||'Non précisé',
+    notes:document.getElementById('np-notes').value.trim(),
+    nextCall:document.getElementById('np-call').value||today,
+    creneau:document.getElementById('np-creneau').value,
+    attempts:[], status:'today'
+  });
+
+  // Si un RDV ORL a été renseigné
+  const hasOrl = document.getElementById('np-has-orl');
+  if(hasOrl && hasOrl.checked) {
+    const orlDoc  = document.getElementById('np-orl-doc').value.trim();
+    const orlDate = document.getElementById('np-orl-date').value;
+    if(orlDoc && orlDate) {
+      const rappelAuto = calcDateRappelOrl(orlDate);
+      orlRdvs.unshift({
+        id: Date.now() + 1,
+        patientName: name,
+        phone,
+        orlName: orlDoc,
+        rdvDate: orlDate,
+        heure: document.getElementById('np-orl-heure').value,
+        adresseOrl: document.getElementById('np-orl-adresse').value.trim(),
+        rdvNous: document.getElementById('np-orl-rdvnous').value,
+        rdvNousHeure: document.getElementById('np-orl-rdvnoush').value,
+        notes: '',
+        status: 'upcoming',
+        rappelDone: false,
+        rappelDate: null,
+        rappelNote: '',
+        rappelProgramme: rappelAuto
+      });
+      saveOrlData();
+      const rappelStr = new Date(rappelAuto+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+      showToast('✅ Patient + RDV ORL ajoutés — rappel le ' + rappelStr);
+    } else {
+      showToast('✅ Patient ajouté (RDV ORL incomplet, non enregistré)');
+    }
+  } else {
+    showToast('✅ Patient ajouté');
+  }
+
+  saveData(); closeModal('modal-patient'); renderAll();
+}
+
+function deletePatient(id) {
+  id = Number(id);
+  const p = patients.find(x => Number(x.id) === id);
+  if(!p) { showToast('Patient introuvable'); return; }
+  showConfirm('Supprimer ce patient ?', p.name + ' — cette action est irréversible.', function() {
+    patients = patients.filter(x => Number(x.id) !== id);
+    closeModal('modal-patient');
+    saveData();
+    renderAll();
+    showToast('✅ ' + p.name + ' supprimé');
+  });
+}
+
+// ══════════════════════════════
+//  AVOIRS
+// ══════════════════════════════
+const FABRICANTS = ['Phonak','Unitron','Oticon','Signia','Siemens','Starkey','GN ReSound','Autre'];
+const FAB_BG = {Phonak:'#E8F4FD',Unitron:'#FEF3E2',Oticon:'#FDE8E8',Signia:'#E8FDF4',Siemens:'#E8FDF4',Starkey:'#F3E8FD','GN ReSound':'#FDF3E8',Autre:'#F1EFE8'};
+const FAB_TC = {Phonak:'#1A5276',Unitron:'#784212',Oticon:'#7B241C',Signia:'#1A5E46',Siemens:'#1A5E46',Starkey:'#6C3483','GN ReSound':'#7D6608',Autre:'#4A4A4A'};
+
+let currentAvoirFilter = 'all';
+let currentAvoirId = null;
+
+function fabInit(f) { return f.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+
+function avoirBadge(s) {
+  if(s==='signalé') return '<span class="badge b-blue">Signalé</span>';
+  if(s==='attente') return '<span class="badge b-amber">En attente d\'avoir</span>';
+  if(s==='recu')    return '<span class="badge" style="background:#EDE9FE;color:#6D28D9;">À pointer</span>';
+  if(s==='pointe')  return '<span class="badge b-green">Pointé ✓</span>';
+  if(s==='litige')  return '<span class="badge b-red">Litige</span>';
+  return '<span class="badge b-gray">Classé</span>';
+}
+
+function renderAvoirRow(a) {
+  const bg=FAB_BG[a.fabricant]||'#F1EFE8', tc=FAB_TC[a.fabricant]||'#4A4A4A';
+  const moisAttenduLabel = a.moisAttendu ? '🗓️ Avoir attendu : '+new Date(a.moisAttendu+'-01T00:00:00').toLocaleDateString('fr-FR',{month:'long',year:'numeric'}) : '';
+  const factureLabel = a.factureNum ? '📄 FA : '+a.factureNum : '';
+  const pointageLabel = a.statut==='pointe' ? '✓ Pointé'+( a.montantRecu?' — '+Number(a.montantRecu).toLocaleString('fr-FR')+' €':'') : '';
+  const litLabel = a.statut==='litige' ? '⚠️ '+( a.pointageNote||'Litige') : '';
+  const details=[a.motif, factureLabel, moisAttenduLabel, pointageLabel||litLabel].filter(Boolean);
+  return `<div class="avoir-row ${a.statut}" onclick="openAvoirModal(${a.id})">
+    <div class="fab-logo" style="background:${bg};color:${tc}">${fabInit(a.fabricant)}</div>
+    <div class="patient-info">
+      <div class="patient-name-row"><span class="patient-name">${a.fabricant}</span>${avoirBadge(a.statut)}</div>
+      <div class="patient-details">${details.map(d=>`<span>${d}</span>`).join('')}</div>
+    </div>
+    <div class="montant-val">${a.montant?Number(a.montant).toLocaleString('fr-FR')+' €':'—'}</div>
+  </div>`;
+}
+
+function initAvYearSelect() {
+  const sel = document.getElementById('av-year-select');
+  if(!sel) return;
+  const currentYear = new Date().getFullYear();
+  // Collecter les années existantes + années autour
+  const years = new Set();
+  avoirs.forEach(a => {
+    if(a.factureDate) years.add(new Date(a.factureDate+'T00:00:00').getFullYear());
+  });
+  for(let y=currentYear+1; y>=currentYear-3; y--) years.add(y);
+  sel.innerHTML = [...years].sort((a,b)=>b-a).map(y =>
+    `<option value="${y}"${y===currentYear?' selected':''}>${y}</option>`
+  ).join('');
+}
+
+function renderAvoirs() {
+  const sel = document.getElementById('av-year-select');
+  const year = sel ? parseInt(sel.value) : new Date().getFullYear();
+  const yl = document.getElementById('av-year-label');
+  if(yl) yl.textContent = '— '+year;
+
+  let list = avoirs.filter(a => {
+    if(!a.factureDate) return true;
+    return new Date(a.factureDate+'T00:00:00').getFullYear() === year;
+  });
+
+  if(currentAvoirFilter==='attente') list=list.filter(a=>a.statut==='attente'||a.statut==='signalé');
+  else if(currentAvoirFilter==='recu')   list=list.filter(a=>a.statut==='recu');
+  else if(currentAvoirFilter==='utilise') list=list.filter(a=>a.statut==='utilise');
+
+  document.getElementById('avoirs-list').innerHTML = list.length
+    ? list.map(renderAvoirRow).join('')
+    : '<div class="empty">💶 Aucun avoir enregistré</div>';
+
+  const selY = document.getElementById('av-year-select');
+  const filterYear = selY ? parseInt(selY.value) : new Date().getFullYear();
+  const avoirsYear = avoirs.filter(a => !a.factureDate || new Date(a.factureDate+'T00:00:00').getFullYear()===filterYear);
+  const att = avoirsYear.filter(a=>a.statut==='attente'||a.statut==='signalé');
+  const aPointer = avoirsYear.filter(a=>a.statut==='recu');
+  const total = [...att,...aPointer].reduce((s,a)=>s+(parseFloat(a.montant)||0),0);
+  document.getElementById('av-attente').textContent = att.length;
+  document.getElementById('av-recu').textContent    = aPointer.length;
+  document.getElementById('av-montant').textContent = total.toLocaleString('fr-FR')+' €';
+
+  const tb = document.getElementById('tab-avoirs-badge');
+  tb.textContent = att.length; tb.style.display = att.length>0?'':'none';
+}
+
+function setAvoirFilter(f, btn) {
+  currentAvoirFilter = f;
+  document.querySelectorAll('#av-filter-row .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAvoirs();
+}
+
+function openAvoirModal(id) {
+  currentAvoirId = id;
+  const a = id ? avoirs.find(x=>x.id===id) : null;
+  const isNew = !a;
+  document.getElementById('ma-title').textContent = a ? 'Dossier avoir — '+a.fabricant : 'Signaler un avoir';
+  const fabOpts = FABRICANTS.map(f=>`<option value="${f}"${a&&a.fabricant===f?' selected':''}>${f}</option>`).join('');
+  const motifs  = ['Erreur de facturation','Remise non appliquée','Surfacturation','Retour produit','Autre'];
+  const motifOpts = '<option value="">-- Sélectionner --</option>'+motifs.map(m=>`<option${a&&a.motif===m?' selected':''}>${m}</option>`).join('');
+
+  // Mois attendu
+  const now = new Date();
+  let moisOpts = '<option value="">-- Sélectionner --</option>';
+  for(let i=0;i<13;i++) {
+    const d = new Date(now.getFullYear(), now.getMonth()+i, 1);
+    const val = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const lbl = d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    moisOpts += `<option value="${val}"${a&&a.moisAttendu===val?' selected':''}>${lbl.charAt(0).toUpperCase()+lbl.slice(1)}</option>`;
+  }
+
+  const showPointage = a && (a.statut==='recu'||a.statut==='pointe'||a.statut==='litige');
+  const ptBg = a&&a.statut==='litige'?'var(--red-bg)':'var(--green-bg)';
+  const ptBorder = a&&a.statut==='litige'?'rgba(192,57,43,.2)':'rgba(29,158,117,.2)';
+  const ptTitleColor = a&&a.statut==='litige'?'var(--red)':'var(--green)';
+
+  document.getElementById('ma-body').innerHTML = `
+
+    <!-- SAISIE RAPIDE -->
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Fabricant *</label><select id="av-fab">${fabOpts}</select></div>
+      <div class="form-group"><label class="form-label">Mois attendu de l'avoir *</label><select id="av-mois">${moisOpts}</select></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">N° facture concernée *</label><input type="text" id="av-facture-num" placeholder="ex : FA-2024-0312" value="${a&&a.factureNum?a.factureNum:''}"></div>
+      <div class="form-group"><label class="form-label">Date de la facture</label><input type="date" id="av-facture-date" value="${a&&a.factureDate?a.factureDate:''}"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Montant de l'erreur (€) *</label><input type="text" id="av-mt" placeholder="ex : 245.00" value="${a&&a.montant?a.montant:''}"></div>
+      <div class="form-group"><label class="form-label">Nature de l'erreur</label><select id="av-motif-sel" onchange="document.getElementById('av-motif').value=this.value">${motifOpts}</select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Préciser si besoin</label><input type="text" id="av-motif" placeholder="Détail de l'erreur..." value="${a&&a.motif?a.motif:''}"></div>
+    <div class="form-group"><label class="form-label">Notes / relances fabricant</label><textarea id="av-notes" placeholder="Date de signalement, contact, réponse fabric...">${a&&a.notes?a.notes:''}</textarea></div>
+
+    <!-- TRAITEMENT DE L'AVOIR (visible seulement si modification) -->
+    ${!isNew ? `
+    <div style="border-top:2px solid var(--border);margin-top:4px;padding-top:16px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;">📋 Traitement de l'avoir</div>
+      <div class="form-group"><label class="form-label">Statut</label>
+        <select id="av-stat" onchange="togglePointageBloc(this.value)">
+          <option value="signalé"${a&&a.statut==='signalé'?' selected':''}>📨 Signalé au fabricant</option>
+          <option value="attente"${a&&a.statut==='attente'?' selected':''}>⏳ En attente de l'avoir</option>
+          <option value="recu"${a&&a.statut==='recu'?' selected':''}>✅ Avoir reçu — à pointer</option>
+          <option value="pointe"${a&&a.statut==='pointe'?' selected':''}>📋 Pointé et conforme</option>
+          <option value="litige"${a&&a.statut==='litige'?' selected':''}>⚠️ Litige / écart</option>
+          <option value="utilise"${a&&a.statut==='utilise'?' selected':''}>📁 Classé</option>
+        </select>
+      </div>
+      <div id="av-pointage-bloc" style="display:${showPointage?'block':'none'};background:${ptBg};border-radius:var(--radius-sm);padding:14px;border:1px solid ${ptBorder};">
+        <div style="font-size:12px;font-weight:700;color:${ptTitleColor};margin-bottom:10px;">📋 Pointage</div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Montant de l'avoir reçu (€)</label><input type="text" id="av-montant-recu" placeholder="ex : 245.00" value="${a&&a.montantRecu?a.montantRecu:''}"></div>
+          <div class="form-group"><label class="form-label">Date de réception</label><input type="date" id="av-date-recu" value="${a&&a.dateRecu?a.dateRecu:''}"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Note de pointage</label>
+          <input type="text" id="av-pointage-note" placeholder="Conforme / écart de X€..." value="${a&&a.pointageNote?a.pointageNote:''}">
+        </div>
+      </div>
+    </div>` : '<input type="hidden" id="av-stat" value="signalé">'}
+  `;
+
+  document.getElementById('ma-footer').innerHTML = `
+    ${a?`<button class="btn btn-danger" onclick="deleteAvoir(${a.id})">Supprimer</button>`:''}
+    <button class="btn btn-secondary" onclick="closeModal('modal-avoir')">Annuler</button>
+    <button class="btn btn-primary" onclick="saveAvoir()">${isNew?'Signaler':'Enregistrer'}</button>
+  `;
+  document.getElementById('modal-avoir').classList.add('open');
+}
+
+function togglePointageBloc(statut) {
+  const el = document.getElementById('av-pointage-bloc');
+  if(!el) return;
+  el.style.display = (statut==='recu'||statut==='pointe'||statut==='litige') ? 'block' : 'none';
+  el.style.background = statut==='litige' ? 'var(--red-bg)' : 'var(--green-bg)';
+}
+
+function saveAvoir() {
+  const fab = document.getElementById('av-fab').value;
+  const factureNum = document.getElementById('av-facture-num').value.trim();
+  const mois = document.getElementById('av-mois').value;
+  const montant = document.getElementById('av-mt').value.trim();
+  if(!fab) { showToast('⚠️ Fabricant requis'); return; }
+  if(!factureNum) { showToast('⚠️ N° de facture requis'); return; }
+  if(!mois) { showToast('⚠️ Mois attendu requis'); return; }
+  if(!montant) { showToast('⚠️ Montant de l\'erreur requis'); return; }
+  const statEl = document.getElementById('av-stat');
+  const data = {
+    fabricant    : fab,
+    statut       : statEl ? statEl.value : 'signalé',
+    factureNum,
+    factureDate  : document.getElementById('av-facture-date').value,
+    montant      : montant.replace(',','.'),
+    motif        : document.getElementById('av-motif').value.trim(),
+    moisAttendu  : mois,
+    montantRecu  : document.getElementById('av-montant-recu') ? document.getElementById('av-montant-recu').value.replace(',','.') : '',
+    dateRecu     : document.getElementById('av-date-recu') ? document.getElementById('av-date-recu').value : '',
+    pointageNote : document.getElementById('av-pointage-note') ? document.getElementById('av-pointage-note').value.trim() : '',
+    notes        : document.getElementById('av-notes').value.trim()
+  };
+  if(currentAvoirId) { const i=avoirs.findIndex(a=>a.id===currentAvoirId); avoirs[i]={...avoirs[i],...data}; }
+  else avoirs.unshift({id:Date.now(),...data});
+  saveData(); closeModal('modal-avoir'); renderAvoirs();
+  showToast(currentAvoirId ? '✅ Avoir mis à jour' : '📨 Avoir signalé');
+}
+
+function deleteAvoir(id) {
+  id = Number(id);
+  const a = avoirs.find(x => Number(x.id) === id);
+  if(!a) { showToast('Avoir introuvable'); return; }
+  showConfirm('Supprimer cet avoir ?', a.fabricant + ' — ' + (a.motif||'') + ' — cette action est irréversible.', function() {
+    avoirs = avoirs.filter(x => Number(x.id) !== id);
+    closeModal('modal-avoir');
+    saveData();
+    renderAvoirs();
+    showToast('Avoir supprimé');
+  });
+}
+
+
+// ══════════════════════════════
+//  RDV ORL
+// ══════════════════════════════
+let orlRdvs = [];
+let orlFilter = 'all';
+let currentOrlId = null;
+
+function loadOrlData() {
+  try { const r=localStorage.getItem(storageKey('orl')); orlRdvs=r?JSON.parse(r):[]; } catch(e){orlRdvs=[];}
+}
+function saveOrlData() {
+  saveData(); // tout sauvegarder ensemble sur GitHub
+}
+function orlDaysDiff(str) {
+  if(!str) return null;
+  const now=new Date(); now.setHours(0,0,0,0);
+  return Math.round((new Date(str+'T00:00:00')-now)/86400000);
+}
+function orlStatus(rdv) {
+  if(rdv.status==='cancelled') return 'cancelled';
+  if(rdv.status==='done') return 'done';
+  const d=orlDaysDiff(rdv.rdvDate);
+  return (d!==null&&d<0)?'done':'upcoming';
+}
+function orlUrgent(rdv) { const d=orlDaysDiff(rdv.rdvDate); return orlStatus(rdv)==='upcoming'&&d!==null&&d<=3; }
+
+function renderOrlRow(rdv) {
+  const diff = orlDaysDiff(rdv.rdvDate);
+  const status = orlStatus(rdv);
+  const hasRdvNous = !!rdv.rdvNous;
+
+  let dateLabel = '';
+  if(rdv.rdvDate) {
+    const ds = new Date(rdv.rdvDate+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    if(status==='done') dateLabel='<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--gray-bg);color:var(--text2);">✓ RDV ORL passé le '+ds+'</span>';
+    else if(rdv.status==='cancelled') dateLabel='<span style="color:var(--red)">Annulé</span>';
+    else if(diff===0) dateLabel='<span style="color:var(--amber);font-weight:600">Aujourd\'hui !</span>';
+    else if(diff===1) dateLabel='<span style="color:var(--amber)">Demain — '+ds+'</span>';
+    else if(diff!==null&&diff<=3) dateLabel='<span style="color:var(--red);font-weight:600">Dans '+diff+'j — '+ds+'</span>';
+    else dateLabel='<span style="color:var(--text2)">Le '+ds+(diff!==null?' (dans '+diff+'j)':'')+'</span>';
+  }
+
+  const rowClass = rdv.status==='cancelled'?'':status==='done'?'orl-done':diff===0?'orl-today':(diff!==null&&diff<=3)?'orl-urgent':'';
+  const initials = (rdv.patientName||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+
+  // Badge : gagné (RDV chez nous) vs à surveiller
+  const statutBadge = hasRdvNous
+    ? '<span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--green-bg);color:var(--green);margin-left:6px;">🟢 RDV chez nous programmé</span>'
+    : '<span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;background:#FEF3E2;color:#854F0B;margin-left:6px;">🟡 Sans RDV chez nous</span>';
+
+  // Ligne rappel ORL
+  // ── Rappel 1 : appeler le patient pour confirmer son RDV ORL ──
+  let rappelOrlLine = '';
+  if(rdv.rappelDone) {
+    rappelOrlLine = '<div style="display:flex;align-items:center;gap:6px;margin-top:5px;padding:5px 10px;border-radius:6px;background:var(--green-bg);border-left:3px solid var(--green);font-size:12px;color:var(--green);">✅ <strong>Rappel ORL effectué</strong> le '+fmt(rdv.rappelDate)+'</div>';
+  } else if(rdv.rappelProgramme && status==='upcoming') {
+    const rDiff = orlDaysDiff(rdv.rappelProgramme);
+    const rDate = new Date(rdv.rappelProgramme+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const rColor = rDiff<=0 ? 'var(--amber)' : '#6D28D9';
+    const rBg    = rDiff<=0 ? 'var(--amber-bg)' : '#F5F3FF';
+    const rBorder= rDiff<=0 ? 'var(--amber)' : '#7C3AED';
+    let rText = rDiff<0
+      ? '⚠️ À appeler — rappel en retard (prévu le '+rDate+')'
+      : rDiff===0 ? '📅 Rappel RDV ORL — AUJOURD\'HUI'
+      : rDiff===1 ? '📅 Rappel RDV ORL — DEMAIN '+rDate
+      : '📅 Rappel RDV ORL le '+rDate;
+    rappelOrlLine = '<div style="display:flex;align-items:flex-start;gap:6px;margin-top:5px;padding:6px 10px;border-radius:6px;background:'+rBg+';border-left:3px solid '+rBorder+';font-size:12px;font-weight:600;color:'+rColor+';">'+rText+'</div>';
+  }
+
+  // ── Rappel 2 : reprendre un RDV chez nous après l'ORL ──────────
+  let rappelNousLine = '';
+  if(!hasRdvNous && status==='upcoming') {
+    if(rdv.rappelDone) {
+      rappelNousLine = '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding:6px 10px;border-radius:6px;background:#FEF3E2;border-left:3px solid var(--amber);font-size:12px;font-weight:600;color:var(--amber);">📅 Rappel ORL fait — reprendre un RDV chez nous maintenant</div>';
+    } else if(rdv.rappelNousProgramme) {
+      const nDiff = orlDaysDiff(rdv.rappelNousProgramme);
+      const nDate = new Date(rdv.rappelNousProgramme+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+      const nColor = nDiff<=0 ? 'var(--amber)' : 'var(--text2)';
+      const nBg    = nDiff<=0 ? '#FEF3E2' : 'var(--surface2)';
+      const nBorder= nDiff<=0 ? 'var(--amber)' : 'var(--border2)';
+      let nText = nDiff<=0
+        ? '📅 Reprendre un RDV chez nous — à faire aujourd\'hui'
+        : nDiff===1 ? '📅 Reprendre un RDV chez nous — à faire demain ('+nDate+')'
+        : '📅 Reprendre un RDV chez nous à partir du '+nDate;
+      rappelNousLine = '<div style="display:flex;align-items:flex-start;gap:6px;margin-top:4px;padding:6px 10px;border-radius:6px;background:'+nBg+';border-left:3px solid '+nBorder+';font-size:12px;color:'+nColor+';">'+nText+'</div>';
+    }
+  }
+
+  const rdvNousLine = hasRdvNous
+    ? '<span style="color:var(--green);">📅 RDV chez nous le '+new Date(rdv.rdvNous+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+(rdv.rdvNousHeure?' à '+rdv.rdvNousHeure:'')+'</span>'
+    : '';
+
+  return '<div class="orl-rdv-row '+rowClass+'" onclick="openOrlModal('+rdv.id+')">'+
+    '<div class="avatar av-purple">'+initials+'</div>'+
+    '<div class="patient-info">'+
+      '<div class="patient-name-row"><span class="patient-name">'+(rdv.patientName||'—')+'</span><span class="orl-badge">🏥 ORL</span>'+statutBadge+'</div>'+
+      rappelOrlLine+
+      rappelNousLine+
+      '<div class="patient-details" style="margin-top:3px;">'+
+        (rdv.orlName?'<span style="color:#6D28D9;font-weight:500">Dr '+rdv.orlName+'</span>':'')+
+        (rdv.rdvDate?'<span>RDV ORL : '+dateLabel+(rdv.heure?' à '+rdv.heure:'')+'</span>':'')+
+        (rdvNousLine?'<span>'+rdvNousLine+'</span>':'')+
+      '</div>'+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--text3);flex-shrink:0;text-align:right">'+(rdv.phone||'')+'</div>'+
+  '</div>';
+}
+function setOrlFilter(f,btn) {
+  orlFilter=f;
+  document.querySelectorAll('#orl-filter-row .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderOrlList();
+}
+
+function renderOrlList() {
+  let list=[...orlRdvs].sort((a,b)=>(a.rdvDate||'').localeCompare(b.rdvDate||''));
+  if(orlFilter==='upcoming') list=list.filter(r=>orlStatus(r)==='upcoming'&&r.status!=='cancelled');
+  else if(orlFilter==='done') list=list.filter(r=>orlStatus(r)==='done'||r.status==='done');
+  else if(orlFilter==='cancelled') list=list.filter(r=>r.status==='cancelled');
+  const el=document.getElementById('orl-list');
+  if(el) el.innerHTML=list.length?list.map(renderOrlRow).join(''):'<div class="empty">🏥 Aucun rendez-vous ORL enregistré</div>';
+  const upcoming=orlRdvs.filter(r=>orlStatus(r)==='upcoming'&&r.status!=='cancelled');
+  const se=document.getElementById('orl-stat-upcoming'); if(se) se.textContent=upcoming.length;
+  const ue=document.getElementById('orl-stat-urgent');   if(ue) ue.textContent=orlRdvs.filter(orlUrgent).length;
+  const re=document.getElementById('orl-stat-rappel');   if(re) re.textContent=orlRdvs.filter(r=>r.rappelDone).length;
+  const u=orlRdvs.filter(orlUrgent).length;
+  const nb=document.getElementById('nb-orl');
+  if(nb){nb.textContent=u;nb.style.display=u>0?'':'none';}
+}
+
+function renderOrlDashboard() {
+  // Intégré dans renderPatients — rien à faire ici séparément
+}
+
+function openOrlModal(id) {
+  currentOrlId=id;
+  const isNew=id===null;
+  const rdv=isNew?{}:orlRdvs.find(r=>r.id===id)||{};
+  document.getElementById('modal-orl-title').textContent=isNew?'Nouveau RDV ORL':'Fiche RDV ORL — '+(rdv.patientName||'');
+  let rappelInfo='';
+  if(!isNew){
+    if(rdv.rappelDone){
+      rappelInfo='<div style="background:var(--green-bg);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;font-size:13px;color:var(--green);">✅ Rappel effectué le '+fmt(rdv.rappelDate)+(rdv.rappelNote?' — '+rdv.rappelNote:'')+'</div>';
+    } else if(rdv.rappelProgramme){
+      const rDate=new Date(rdv.rappelProgramme+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+      const rDiff=orlDaysDiff(rdv.rappelProgramme);
+      const rColor=rDiff<=0?'var(--red)':rDiff<=1?'var(--amber)':'#6D28D9';
+      const rIcon=rDiff<0?'⚠️':rDiff===0?'📞 AUJOURD\'HUI —':'📞';
+      rappelInfo='<div style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13px;"><span style="font-weight:600;color:'+rColor+';">'+rIcon+' Rappel programmé : '+rDate+'</span><span style="color:var(--text3);font-size:12px;margin-left:8px;">(calculé automatiquement)</span></div>';
+    }
+  }
+  document.getElementById('modal-orl-body').innerHTML=rappelInfo+`
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Nom du patient *</label><input type="text" id="orl-pname" value="${rdv.patientName||''}" placeholder="Jean Dupont"></div>
+      <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="orl-phone" value="${rdv.phone||''}" placeholder="06 xx xx xx xx"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Médecin ORL *</label><input type="text" id="orl-doc" value="${rdv.orlName||''}" placeholder="ex: Dr Martin"></div>
+      <div class="form-group"><label class="form-label">Date du RDV ORL *</label><input type="date" id="orl-date" value="${rdv.rdvDate||''}"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Heure</label><input type="time" id="orl-heure" value="${rdv.heure||''}"></div>
+      <div class="form-group"><label class="form-label">Adresse cabinet ORL</label><input type="text" id="orl-adresse" value="${rdv.adresseOrl||''}" placeholder="ex: 12 rue de la Paix, Aix"></div>
+    </div>
+    <div style="background:#F5F3FF;border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:600;color:#5B21B6;margin-bottom:10px;">📅 RDV chez nous après l'ORL</div>
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Date</label><input type="date" id="orl-rdvnous" value="${rdv.rdvNous||''}"></div>
+        <div class="form-group"><label class="form-label">Heure</label><input type="time" id="orl-rdvnoush" value="${rdv.rdvNousHeure||''}"></div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="orl-notes" placeholder="Raison de l'orientation, informations utiles...">${rdv.notes||''}</textarea></div>
+        ${!isNew&&orlStatus(rdv)==='upcoming'&&rdv.status!=='cancelled'?`
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px;">J\'ai appelé le patient pour confirmer son RDV ORL</div>
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Date de l\'appel</label><input type="date" id="orl-rappel-date" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="form-group"><label class="form-label">Note (optionnel)</label><input type="text" id="orl-rappel-note" placeholder="ex: Confirmé, message laissé..."></div>
+      </div>
+      ${rdv.rdvNous ? `
+      <div style="background:var(--green-bg);border-radius:var(--radius-sm);padding:10px 14px;margin-top:4px;font-size:13px;color:var(--green);">
+        📅 RDV chez nous déjà programmé le \${new Date(rdv.rdvNous+\'T00:00:00\').toLocaleDateString(\'fr-FR\',{weekday:\'long\',day:\'numeric\',month:\'long\'})}\${rdv.rdvNousHeure ? \" à \"+rdv.rdvNousHeure : \"\"} — simple confirmation du RDV ORL
+      </div>` : `
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Suite à cet appel :</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
+        <button id="orl-suite-rdv" onclick="selectOrlSuite(\'rdv\')" style="border:2px solid var(--border2);border-radius:var(--radius-sm);padding:12px 10px;background:none;cursor:pointer;text-align:left;font-family:inherit;">
+          <div style="font-size:16px;margin-bottom:4px;">🎉</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">RDV pris chez nous</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;">Le patient a confirmé un RDV dans notre centre</div>
+        </button>
+        <button id="orl-suite-rappel" onclick="selectOrlSuite(\'rappel\')" style="border:2px solid var(--border2);border-radius:var(--radius-sm);padding:12px 10px;background:none;cursor:pointer;text-align:left;font-family:inherit;">
+          <div style="font-size:16px;margin-bottom:4px;">📅</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">Rappel à programmer</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;">Reprendre un RDV chez nous après l\'ORL</div>
+        </button>
+      </div>
+      <div id="orl-suite-rdv-block" style="display:none;background:var(--green-bg);border-radius:var(--radius-sm);padding:12px;margin-top:8px;border:1px solid rgba(29,158,117,.2);">
+        <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:8px;">RDV chez nous</div>
+        <div class="form-row-2">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="orl-rdv-nous-date"></div>
+          <div class="form-group"><label class="form-label">Heure</label><input type="time" id="orl-rdv-nous-heure"></div>
+        </div>
+      </div>
+      <div id="orl-suite-rappel-block" style="display:none;background:#FEF3E2;border-radius:var(--radius-sm);padding:12px;margin-top:8px;border:1px solid rgba(186,117,23,.2);">
+        <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:8px;">Rappeler le patient pour reprendre RDV chez nous</div>
+        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Rappeler le</label><input type="date" id="orl-rappel-nous-date"></div>
+      </div>`}
+      <button class="btn btn-primary" onclick="saveOrlRappel()" style="width:100%;margin-top:12px;">✅ Enregistrer</button>
+    </div>`:''}\n  `;
+  document.getElementById('modal-orl-footer').innerHTML=isNew
+    ?`<button class="btn btn-secondary" onclick="closeOrlModal()">Annuler</button><button class="btn btn-primary" onclick="saveOrlRdv()">Enregistrer</button>`
+    :`<button class="btn btn-danger" onclick="deleteOrlRdv(${rdv.id})">Supprimer</button>
+      ${rdv.status!=='cancelled'?'<button class="btn btn-secondary" style="color:var(--amber);border-color:var(--amber);" onclick="cancelOrlRdv('+rdv.id+')">Annuler RDV</button>':''}
+      ${rdv.status!=='done'&&orlStatus(rdv)==='upcoming'?'<button class="btn btn-secondary" style="color:var(--green);border-color:var(--green);" onclick="markOrlDone('+rdv.id+')">Marquer passé</button>':''}
+      <button class="btn btn-secondary" onclick="closeOrlModal()">Fermer</button>
+      <button class="btn btn-primary" onclick="saveOrlRdv()">Enregistrer</button>`;
+  document.getElementById('modal-orl').classList.add('open');
+}
+
+
+function calcDateRappelOrl(rdvDateStr) {
+  // Prend la veille du RDV, recule si samedi (6) ou dimanche (0)
+  const d = new Date(rdvDateStr + 'T00:00:00');
+  d.setDate(d.getDate() - 1); // veille
+  const dow = d.getDay();
+  if(dow === 0) d.setDate(d.getDate() - 2); // dimanche → vendredi
+  if(dow === 6) d.setDate(d.getDate() - 1); // samedi  → vendredi
+  // Utiliser l'heure locale (pas UTC) pour éviter le décalage de fuseau horaire
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const j = String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+j;
+}
+function saveOrlRdv() {
+  const pname=document.getElementById('orl-pname').value.trim();
+  const phone=document.getElementById('orl-phone').value.trim();
+  const doc=document.getElementById('orl-doc').value.trim();
+  const date=document.getElementById('orl-date').value;
+  if(!pname||!phone||!doc||!date){showToast('⚠️ Nom, téléphone, ORL et date requis');return;}
+  const data={patientName:pname,phone,orlName:doc,rdvDate:date,heure:document.getElementById('orl-heure').value,adresseOrl:document.getElementById('orl-adresse').value.trim(),rdvNous:document.getElementById('orl-rdvnous').value,rdvNousHeure:document.getElementById('orl-rdvnoush').value,notes:document.getElementById('orl-notes').value.trim()};
+  const rappelAuto = calcDateRappelOrl(date);
+  const rdvNousVal = document.getElementById('orl-rdvnous') ? document.getElementById('orl-rdvnous').value : data.rdvNous;
+  // Si pas de RDV chez nous : rappel "reprendre RDV" = J+3 après le RDV ORL (jour ouvré)
+  let rappelNousAuto = null;
+  if(!rdvNousVal) {
+    const d3 = new Date(date+'T00:00:00'); d3.setDate(d3.getDate()+3);
+    if(d3.getDay()===6) d3.setDate(d3.getDate()+2);
+    if(d3.getDay()===0) d3.setDate(d3.getDate()+1);
+    rappelNousAuto = d3.toISOString().slice(0,10);
+  }
+  if(currentOrlId===null){
+    orlRdvs.unshift({id:Date.now(),...data,status:'upcoming',rappelDone:false,rappelDate:null,rappelNote:'',rappelProgramme:rappelAuto,rappelNousProgramme:rappelNousAuto});
+    const msg = rdvNousVal
+      ? '✅ RDV ORL ajouté — rappel le '+new Date(rappelAuto+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})
+      : '✅ RDV ORL ajouté — 2 rappels programmés (ORL + reprise RDV chez nous)';
+    showToast(msg);
+  } else {
+    const r=orlRdvs.find(x=>x.id===currentOrlId);
+    if(r){ Object.assign(r,data); if(!r.rappelDone) r.rappelProgramme=rappelAuto; r.rappelNousProgramme=rappelNousAuto; }
+    showToast('✅ RDV ORL mis à jour');
+  }
+  saveOrlData();closeOrlModal();renderOrlDashboard();renderOrlList();
+}
+function selectOrlSuite(type) {
+  ['rdv','rappel'].forEach(function(t){
+    var b=document.getElementById('orl-suite-'+t),k=document.getElementById('orl-suite-'+t+'-block');
+    if(b){b.style.borderColor='var(--border2)';b.style.background='none';}
+    if(k)k.style.display='none';
+  });
+  var b=document.getElementById('orl-suite-'+type),k=document.getElementById('orl-suite-'+type+'-block');
+  if(b){b.style.borderColor=type==='rdv'?'var(--green)':'var(--amber)';b.style.background=type==='rdv'?'var(--green-bg)':'#FEF3E2';}
+  if(k)k.style.display='block';
+}
+function saveOrlRappel() {
+  const rdv=orlRdvs.find(r=>r.id===currentOrlId); if(!rdv) return;
+  rdv.rappelDone=true;
+  const dEl=document.getElementById('orl-rappel-date');
+  rdv.rappelDate=dEl?dEl.value||new Date().toISOString().slice(0,10):new Date().toISOString().slice(0,10);
+  const nEl=document.getElementById('orl-rappel-note'); rdv.rappelNote=nEl?nEl.value.trim():'';
+  const rdvD=document.getElementById('orl-rdv-nous-date');
+  const rdvH=document.getElementById('orl-rdv-nous-heure');
+  const rapD=document.getElementById('orl-rappel-nous-date');
+
+  if(rdvD&&rdvD.value){
+    // RDV pris chez nous — noter sur le dossier ORL et passer le patient en RDV pris
+    rdv.rdvNous=rdvD.value; rdv.rdvNousHeure=rdvH?rdvH.value:''; rdv.rappelNousProgramme=null;
+    rdv.status='done';
+    saveOrlData();
+
+    // Chercher ou créer le patient dans le suivi classique et le passer en RDV pris
+    const existingRdv = patients.find(p => p.phone === rdv.phone);
+    if(existingRdv) {
+      existingRdv.status = 'rdv';
+      existingRdv.nextCall = null;
+      existingRdv.attempts.unshift({
+        type:'reached',
+        date: rdv.rappelDate||new Date().toISOString().slice(0,10),
+        note: 'RDV pris chez nous le '+new Date(rdvD.value+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+(rdvH&&rdvH.value?' à '+rdvH.value:'')
+      });
+    } else {
+      patients.unshift({
+        id: Date.now(),
+        name: rdv.patientName,
+        phone: rdv.phone,
+        date: new Date().toISOString().slice(0,10),
+        reason: 'Après RDV ORL',
+        notes: 'RDV ORL Dr '+rdv.orlName+' — RDV chez nous le '+new Date(rdvD.value+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'}),
+        nextCall: null,
+        creneau: '',
+        attempts: [{
+          type:'reached',
+          date: rdv.rappelDate||new Date().toISOString().slice(0,10),
+          note: 'RDV pris chez nous le '+new Date(rdvD.value+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+(rdvH&&rdvH.value?' à '+rdvH.value:'')
+        }],
+        status: 'rdv'
+      });
+    }
+    saveData();
+    closeOrlModal(); renderAll();
+    showToast('🎉 RDV chez nous enregistré — patient passé en RDV pris !');
+
+  } else if(rapD&&rapD.value){
+    // Pas de RDV — créer un patient classique avec rappel pour reprendre RDV chez nous
+    rdv.rappelNousProgramme=rapD.value;
+    saveOrlData();
+
+    // Chercher si ce patient existe déjà dans le suivi classique (par téléphone)
+    const existing = patients.find(p => p.phone === rdv.phone);
+    if(existing) {
+      // Mettre à jour le rappel du patient existant
+      existing.nextCall = rapD.value;
+      existing.status = 'waiting';
+      existing.notes = (existing.notes ? existing.notes + ' | ' : '') + 'Après RDV ORL Dr '+rdv.orlName+' — reprendre RDV chez nous';
+      existing.attempts.unshift({
+        type:'reached', date:rdv.rappelDate||new Date().toISOString().slice(0,10),
+        note:'Rappel RDV ORL effectué — '+rdv.orlName+'. Reprendre RDV chez nous le '+new Date(rapD.value+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})
+      });
+      showToast('📅 Rappel programmé — visible dans Rappels à venir');
+    } else {
+      // Créer un nouveau patient dans le suivi classique
+      patients.unshift({
+        id: Date.now(),
+        name: rdv.patientName,
+        phone: rdv.phone,
+        date: new Date().toISOString().slice(0,10),
+        reason: 'Après RDV ORL — reprendre RDV chez nous',
+        notes: 'RDV ORL effectué chez Dr '+rdv.orlName+'. Rappel ORL fait le '+rdv.rappelDate,
+        nextCall: rapD.value,
+        creneau: '',
+        attempts: [{
+          type:'reached', date:rdv.rappelDate||new Date().toISOString().slice(0,10),
+          note:'Rappel RDV ORL effectué — reprendre RDV chez nous'
+        }],
+        status: 'waiting'
+      });
+      showToast('📅 Rappel programmé — visible dans Rappels à venir');
+    }
+    saveData();
+    closeOrlModal();
+    renderAll();
+    // Naviguer vers la vue "Rappels à venir" pour voir le patient
+    const navBtn = document.querySelector('.nav-item[onclick*=liste]');
+    if(navBtn) {
+      switchPsec('liste', navBtn);
+      currentFilter = 'waiting';
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        if(b.textContent.trim() === 'Rappels à venir') b.classList.add('active');
+      });
+      renderPatients();
+    }
+
+  } else {
+    saveOrlData(); closeOrlModal(); renderAll();
+    showToast('✅ Rappel ORL enregistré');
+  }
+}
+function deleteOrlRdv(id){
+  id=Number(id);
+  const r=orlRdvs.find(x=>Number(x.id)===id);
+  if(!r){showToast('RDV introuvable');return;}
+  showConfirm('Supprimer ce RDV ORL ?', r.patientName + ' — Dr ' + (r.orlName||'') + ' — cette action est irréversible.', function() {
+    orlRdvs=orlRdvs.filter(x=>Number(x.id)!==id);
+    closeOrlModal();
+    saveOrlData();
+    renderAll();
+    showToast('RDV ORL supprimé');
+  });
+}
+function cancelOrlRdv(id){id=Number(id);const r=orlRdvs.find(x=>Number(x.id)===id);if(r){r.status='cancelled';closeOrlModal();saveOrlData();renderAll();showToast('RDV annulé');}}
+function markOrlDone(id){id=Number(id);const r=orlRdvs.find(x=>Number(x.id)===id);if(r){r.status='done';closeOrlModal();saveOrlData();renderAll();showToast('RDV marqué passé');}}
+function closeOrlModal(){document.getElementById('modal-orl').classList.remove('open');}
+document.getElementById('modal-orl').addEventListener('click',function(e){if(e.target===this)closeOrlModal();});
+
+
+// ══════════════════════════════
+//  AVIS GOOGLE
+// ══════════════════════════════
+let avisGoogle = [];
+let currentAvisFilter = 'all';
+let currentAvisId = null;
+
+function loadAvisData() {
+  try { avisGoogle = JSON.parse(localStorage.getItem(storageKey('avis'))) || []; } catch(e) { avisGoogle = []; }
+}
+
+function saveAvisData() {
+  localStorage.setItem(storageKey('avis'), JSON.stringify(avisGoogle));
+  const data = { patients, avoirs, orlRdvs, avisGoogle, crPatients };
+  showSyncIndicator('💾 Sauvegarde...');
+  githubSave(currentCentre, data).then(ok => {
+    if(ok) showSyncIndicator('✅ Sauvegardé', 2000);
+  });
+}
+
+function avisStatutBadge(a) {
+  const s = a.statut;
+  const nb = (a.relances||[]).length;
+  if(s==='mail-envoye') return '<span class="badge b-blue">📧 Mail envoyé</span>';
+  if(s==='relance')     return '<span class="badge b-amber">🔄 Relance '+nb+'</span>';
+  if(s==='avis-recu')   return '<span class="badge b-green">⭐ Avis reçu</span>';
+  if(s==='cloture')     return '<span class="badge b-gray">📁 Clôturé</span>';
+  return '';
+}
+
+function starsHtml(n) {
+  if(!n) return '';
+  return '<span class="stars">' + '★'.repeat(n) + '☆'.repeat(5-n) + '</span>';
+}
+
+function renderAvisRow(a) {
+  const initials = (a.nom||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  const relances = a.relances || [];
+  const lastRelance = relances.length ? '🔄 Relance '+relances.length+' le '+fmt(relances[relances.length-1].date) : '';
+  const lastAction = lastRelance || (a.mailDate ? '📧 Mail le '+fmt(a.mailDate) : '');
+  return `<div class="avis-row ${a.statut}" onclick="openAvisModal(${a.id})">
+    <div class="avatar av-blue">${initials}</div>
+    <div class="patient-info">
+      <div class="patient-name-row"><span class="patient-name">${a.nom}</span>${avisStatutBadge(a)}</div>
+      <div class="patient-details">
+        ${a.email?`<span>✉️ ${a.email}</span>`:''}
+        ${lastAction?`<span>${lastAction}</span>`:''}
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);flex-shrink:0;">${a.telephone||''}</div>
+  </div>`;
+}
+
+function setAvisFilter(f, btn) {
+  currentAvisFilter = f;
+  document.querySelectorAll('#avis-filter-row .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAvisList();
+}
+
+function renderAvisList() {
+  let list = avisGoogle;
+  if(currentAvisFilter==='actif')      list = avisGoogle.filter(a=>['mail-envoye','relance'].includes(a.statut));
+  else if(currentAvisFilter==='avis-recu') list = avisGoogle.filter(a=>a.statut==='avis-recu');
+  else if(currentAvisFilter==='cloture')   list = avisGoogle.filter(a=>a.statut==='cloture');
+
+  const el = document.getElementById('avis-list');
+  if(el) el.innerHTML = list.length ? list.map(renderAvisRow).join('') : '<div class="empty">⭐ Aucune demande d\'avis enregistrée</div>';
+
+  const mails   = avisGoogle.filter(a=>a.statut!=='cloture').length;
+  const attente = avisGoogle.filter(a=>['mail-envoye','relance'].includes(a.statut)).length;
+  const recus   = avisGoogle.filter(a=>a.statut==='avis-recu');
+  const notes   = recus.filter(a=>a.note).map(a=>a.note);
+  const moy     = notes.length ? (notes.reduce((s,n)=>s+n,0)/notes.length).toFixed(1) : null;
+
+  const se=document.getElementById('avis-stat-mail');    if(se) se.textContent=mails;
+  const ae=document.getElementById('avis-stat-attente'); if(ae) ae.textContent=attente;
+  const re=document.getElementById('avis-stat-recu');    if(re) re.textContent=recus.length;
+  const ne=document.getElementById('avis-stat-note');    if(ne) ne.textContent=recus.length > 0 ? recus.length+' reçu'+(recus.length>1?'s':'') : '—';
+
+  const tb=document.getElementById('tab-avis-badge');
+  if(tb){ tb.textContent=attente; tb.style.display=attente>0?'':'none'; }
+}
+
+function openAvisModal(id) {
+  currentAvisId = id;
+  const a = id ? avisGoogle.find(x=>x.id===id) : null;
+  const isNew = !a;
+  document.getElementById('avis-modal-title').textContent = a ? 'Dossier avis — '+a.nom : 'Nouvelle demande d\'avis';
+  const relances = a ? (a.relances||[]) : [];
+  const noteOpts = [1,2,3,4,5].map(n=>`<option value="${n}"${a&&a.note===n?' selected':''}>${'★'.repeat(n)} (${n}/5)</option>`).join('');
+
+  // Historique des relances
+  const relancesHtml = relances.length ? relances.map((r,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <span style="background:var(--amber-bg);color:var(--amber);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;">Relance ${i+1}</span>
+      <span style="color:var(--text2);">le ${fmt(r.date)}</span>
+      ${r.note?`<span style="color:var(--text3);">${r.note}</span>`:''}
+      <button onclick="deleteRelance(${i})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;">✕</button>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--text3);padding:4px 0;">Aucune relance</div>';
+
+  document.getElementById('avis-modal-body').innerHTML = `
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Nom du patient *</label><input type="text" id="av-nom" value="${a?a.nom||'':''}" placeholder="Jean Dupont"></div>
+      <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" id="av-tel" value="${a?a.telephone||'':''}" placeholder="06 xx xx xx xx"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input type="text" id="av-email" value="${a?a.email||'':''}" placeholder="jean.dupont@email.com"></div>
+
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Mail envoyé le *</label><input type="date" id="av-mail-date" value="${a?a.mailDate||'':new Date().toISOString().slice(0,10)}"></div>
+      <div class="form-group"><label class="form-label">Notes internes</label><input type="text" id="av-notes" value="${a?a.notes||'':''}" placeholder="Observations..."></div>
+    </div>
+
+    ${relances.length ? `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:8px;">Historique des relances</div>
+      <div id="relances-list">${relancesHtml}</div>
+    </div>` : ''}
+
+    <!-- Ajouter une relance -->
+    ${!isNew && a.statut!=='avis-recu' && a.statut!=='cloture' ? `
+    <div style="background:var(--amber-bg);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;border:1px solid rgba(186,117,23,.2);">
+      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:8px;">➕ Ajouter une relance</div>
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Date</label><input type="date" id="av-new-relance-date" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="form-group"><label class="form-label">Note (optionnel)</label><input type="text" id="av-new-relance-note" placeholder="ex: pas de réponse..."></div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%;color:var(--amber);border-color:var(--amber);" onclick="addRelance()">+ Ajouter cette relance</button>
+    </div>` : ''}
+
+    <!-- Clôture -->
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Clôturer ce dossier</div>
+      <div class="outcome-grid">
+        <button class="outcome-btn ${a&&a.statut==='avis-recu'?'sel-green':''}" id="btn-avis-recu" onclick="selectAvisSuite('avis-recu',this)">
+          <span style="font-size:18px;">⭐</span><div><div style="font-weight:600;">Avis reçu ✅</div><div style="font-size:11px;color:var(--text2);">Le patient a laissé un avis</div></div>
+        </button>
+        <button class="outcome-btn ${a&&a.statut==='cloture'?'sel-red':''}" id="btn-cloture" onclick="selectAvisSuite('cloture',this)">
+          <span style="font-size:18px;">📁</span><div><div style="font-weight:600;">Clôturé sans avis</div><div style="font-size:11px;color:var(--text2);">Abandonner le suivi</div></div>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('avis-modal-footer').innerHTML = `
+    ${a?`<button class="btn btn-danger" onclick="deleteAvis(${a.id})">Supprimer</button>`:''}
+    <button class="btn btn-secondary" onclick="closeModal('modal-avis')">Annuler</button>
+    <button class="btn btn-primary" onclick="saveAvis()">${isNew?'Enregistrer':'Mettre à jour'}</button>
+  `;
+  document.getElementById('modal-avis').classList.add('open');
+}
+
+let _avisSelectedSuite = null;
+function selectAvisSuite(type, btn) {
+  _avisSelectedSuite = type;
+  document.querySelectorAll('#btn-avis-recu,#btn-cloture').forEach(b=>{b.className='outcome-btn';});
+  btn.classList.add(type==='avis-recu'?'sel-green':'sel-red');
+  const el = document.getElementById('av-avis-bloc');
+  if(el) el.style.display = type==='avis-recu'?'block':'none';
+}
+
+function addRelance() {
+  const dateEl = document.getElementById('av-new-relance-date');
+  const noteEl = document.getElementById('av-new-relance-note');
+  if(!dateEl||!dateEl.value) { showToast('⚠️ Date de relance requise'); return; }
+  const a = avisGoogle.find(x=>x.id===currentAvisId);
+  if(!a) return;
+  if(!a.relances) a.relances = [];
+  a.relances.push({ date: dateEl.value, note: noteEl?noteEl.value.trim():'' });
+  a.statut = 'relance';
+  saveAvisData();
+  openAvisModal(currentAvisId); // recharger la modal
+  showToast('🔄 Relance ajoutée');
+}
+
+function deleteRelance(idx) {
+  const a = avisGoogle.find(x=>x.id===currentAvisId);
+  if(!a||!a.relances) return;
+  a.relances.splice(idx,1);
+  if(a.relances.length===0 && a.statut==='relance') a.statut='mail-envoye';
+  saveAvisData();
+  openAvisModal(currentAvisId);
+}
+
+function saveAvis() {
+  const nom = document.getElementById('av-nom').value.trim();
+  const mailDate = document.getElementById('av-mail-date').value;
+  if(!nom) { showToast('⚠️ Nom du patient requis'); return; }
+  if(!mailDate) { showToast('⚠️ Date du mail requise'); return; }
+  const a = currentAvisId ? avisGoogle.find(x=>x.id===currentAvisId) : null;
+  const relances = a ? (a.relances||[]) : [];
+  let statut = a ? a.statut : 'mail-envoye';
+  if(_avisSelectedSuite) statut = _avisSelectedSuite;
+  else if(relances.length>0 && statut!=='avis-recu' && statut!=='cloture') statut='relance';
+  const data = {
+    nom, statut, relances,
+    telephone  : document.getElementById('av-tel').value.trim(),
+    email      : document.getElementById('av-email').value.trim(),
+    mailDate,
+    notes      : document.getElementById('av-notes').value.trim(),
+  };
+  if(currentAvisId) {
+    const i = avisGoogle.findIndex(a=>a.id===currentAvisId);
+    avisGoogle[i] = {...avisGoogle[i], ...data};
+  } else {
+    avisGoogle.unshift({id:Date.now(), ...data});
+  }
+  _avisSelectedSuite = null;
+  saveAvisData();
+  closeModal('modal-avis');
+  renderAvisList();
+  showToast('✅ Avis enregistré');
+}
+
+function deleteAvis(id) {
+  id = Number(id);
+  const a = avisGoogle.find(x=>Number(x.id)===id);
+  if(!a) return;
+  showConfirm('Supprimer cette demande ?', a.nom+' — cette action est irréversible.', function() {
+    avisGoogle = avisGoogle.filter(x=>Number(x.id)!==id);
+    saveAvisData();
+    closeModal('modal-avis');
+    renderAvisList();
+    showToast('Demande supprimée');
+  });
+}
+
+document.getElementById('modal-avis').addEventListener('click', function(e){ if(e.target===this) closeModal('modal-avis'); });
+
+
+
+// ══════════════════════════════
+//  CR PATIENTS
+// ══════════════════════════════
+let crPatients = [];
+let currentCrFilter = 'all';
+let currentCrId = null;
+
+function loadCrData() {
+  try { crPatients = JSON.parse(localStorage.getItem(storageKey('cr'))) || []; } catch(e) { crPatients = []; }
+}
+
+function saveCrData() {
+  localStorage.setItem(storageKey('cr'), JSON.stringify(crPatients));
+  const data = { patients, avoirs, orlRdvs, avisGoogle, crPatients };
+  showSyncIndicator('💾 Sauvegarde...');
+  githubSave(currentCentre, data).then(ok => {
+    if(ok) showSyncIndicator('✅ Sauvegardé', 2000);
+  });
+}
+
+function getCrYears() {
+  // Récupérer les années stockées + année courante
+  try {
+    const stored = JSON.parse(localStorage.getItem(storageKey('cr_years'))) || [];
+    const currentYear = new Date().getFullYear();
+    const years = new Set([currentYear, ...stored]);
+    // Ajouter les années des CR existants
+    crPatients.forEach(c => {
+      if(c.dateFactu) years.add(new Date(c.dateFactu+'T00:00:00').getFullYear());
+    });
+    return [...years].sort((a,b)=>b-a);
+  } catch(e) { return [new Date().getFullYear()]; }
+}
+
+function saveCrYears(years) {
+  localStorage.setItem(storageKey('cr_years'), JSON.stringify(years));
+}
+
+function initCrYearSelect() {
+  const sel = null;
+  if(!sel) return;
+  const years = getCrYears();
+  const current = new Date().getFullYear();
+  sel.innerHTML = years.map(y =>
+    `<option value="${y}"${y===current?' selected':''}>${y}</option>`
+  ).join('');
+}
+
+function addCrYear() {
+  const years = getCrYears();
+  const maxYear = Math.max(...years);
+  const newYear = maxYear + 1;
+  years.unshift(newYear);
+  saveCrYears(years);
+  initCrYearSelect();
+  // Sélectionner la nouvelle année
+  const sel = document.getElementById('cr-year-select');
+  if(sel) { sel.value = newYear; renderCrList(); }
+  showToast('✅ Année ' + newYear + ' ajoutée');
+}
+
+function goToCrFilter(f) {
+  setCrFilter(f, document.getElementById('cr-f-'+f));
+}
+
+function setCrFilter(f, btn) {
+  currentCrFilter = f;
+  document.querySelectorAll('.cr-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCrList();
+}
+
+function renderCrList() {
+  let list = crPatients;
+  // Statut calculé :
+  // - "done" = les deux cases cochées (ORL et MG, ou seulement ceux qui existent)
+  // - "encours" = au moins une case cochée mais pas les deux
+  // - "todo" = aucune case cochée
+  function crStatut(c) {
+    const hasOrl = !!c.orl, hasMed = !!c.med;
+    const orlOk = !hasOrl || c.crOrl;
+    const medOk = !hasMed || c.crMed;
+    if(orlOk && medOk) return 'done';
+    if(c.crOrl || c.crMed) return 'encours';
+    return 'todo';
+  }
+
+  if(currentCrFilter === 'todo')     list = list.filter(c => crStatut(c) === 'todo');
+  else if(currentCrFilter === 'encours') list = list.filter(c => crStatut(c) === 'encours');
+  else if(currentCrFilter === 'done')    list = list.filter(c => crStatut(c) === 'done');
+  else list = list.filter(c => crStatut(c) !== 'done'); // "Tous" = exclure les envoyés
+
+  // Stats
+  const allYear = crPatients.filter(c => !c.dateFactu || new Date(c.dateFactu+'T00:00:00').getFullYear() === year);
+  const todoCount    = allYear.filter(c => crStatut(c) === 'todo').length;
+  const encoursCount = allYear.filter(c => crStatut(c) === 'encours').length;
+  const doneCount    = allYear.filter(c => crStatut(c) === 'done').length;
+  const se = document.getElementById('cr-stat-orl-todo'); if(se) se.textContent = todoCount;
+  const me = document.getElementById('cr-stat-med-todo'); if(me) me.textContent = encoursCount;
+  const de = document.getElementById('cr-stat-done');     if(de) de.textContent = doneCount;
+
+  // Badge onglet
+  const tb = document.getElementById('tab-cr-badge');
+  if(tb) { const n=todoCount+encoursCount; tb.textContent=n; tb.style.display=n>0?'':'none'; }
+
+  const tbody = document.getElementById('cr-tbody');
+  if(!tbody) return;
+  if(!list.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3);">Aucun CR pour cette période</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(c => {
+    const allDone = (!c.orl||c.crOrl) && (!c.med||c.crMed);
+    const noteHtml = c.note
+      ? (c.noteUrgente
+          ? `<span class="cr-note-urgent">⚠️ ${c.note}</span>`
+          : `<span class="cr-note-normal">${c.note}</span>`)
+      : '<span style="color:var(--border2);font-size:12px;">—</span>';
+    const statut = crStatut(c);
+    const statutBadge = statut==='done'
+      ? '<span style="font-size:11px;background:var(--green-bg);color:var(--green);padding:2px 6px;border-radius:8px;font-weight:600;">✅ Envoyé</span>'
+      : statut==='encours'
+      ? '<span style="font-size:11px;background:var(--amber-bg);color:var(--amber);padding:2px 6px;border-radius:8px;font-weight:600;">📤 En cours</span>'
+      : '';
+    return `<tr class="${statut==='done'?'cr-done':''}">
+      <td style="font-weight:600;">${c.nom} ${statutBadge}</td>
+      <td style="color:var(--text2);">${c.dateFactu?fmt(c.dateFactu):'—'}</td>
+      <td style="color:var(--text2);">${c.orl||'—'}</td>
+      <td style="text-align:center;">
+        ${c.orl ? `<input type="checkbox" class="cr-check" ${c.crOrl?'checked':''} onchange="toggleCr(${c.id},'orl',this.checked)" title="CR ORL envoyé">` : '<span style="color:var(--border2);">—</span>'}
+      </td>
+      <td style="color:var(--text2);">${c.med||'—'}</td>
+      <td style="text-align:center;">
+        ${c.med ? `<input type="checkbox" class="cr-check" ${c.crMed?'checked':''} onchange="toggleCr(${c.id},'med',this.checked)" title="CR Généraliste envoyé">` : '<span style="color:var(--border2);">—</span>'}
+      </td>
+      <td class="cr-note-cell">${noteHtml}</td>
+      <td><button class="cr-edit-btn" onclick="openCrModal(${c.id})">✏️</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleCr(id, type, checked) {
+  id = Number(id);
+  const c = crPatients.find(x=>Number(x.id)===id);
+  if(!c) return;
+  if(type==='orl') c.crOrl = checked;
+  if(type==='med') c.crMed = checked;
+  saveCrData();
+  renderCrList();
+  // Message selon le nouveau statut
+  const hasOrl = !!c.orl, hasMed = !!c.med;
+  const orlOk = !hasOrl || c.crOrl;
+  const medOk = !hasMed || c.crMed;
+  if(orlOk && medOk) showToast('🎉 '+c.nom+' — tous les CR envoyés !');
+  else if(checked) showToast('📤 CR marqué comme envoyé');
+  else showToast('CR remis en attente');
+}
+
+function openCrModal(id) {
+  currentCrId = id;
+  const c = id ? crPatients.find(x=>x.id===id) : null;
+  document.getElementById('cr-modal-title').textContent = c ? 'Modifier — '+c.nom : 'Nouveau CR patient';
+
+  document.getElementById('cr-modal-body').innerHTML = `
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Nom du patient *</label><input type="text" id="cr-nom" value="${c?c.nom||'':''}" placeholder="ex: DUPONT Jean"></div>
+      <div class="form-group"><label class="form-label">Date de facturation</label><input type="date" id="cr-date" value="${c?c.dateFactu||'':new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Médecin ORL</label><input type="text" id="cr-orl" value="${c?c.orl||'':''}" placeholder="ex: Dr ALOUI"></div>
+      <div class="form-group"><label class="form-label">Médecin généraliste</label><input type="text" id="cr-med" value="${c?c.med||'':''}" placeholder="ex: Dr MARTIN"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note</label>
+      <input type="text" id="cr-note" value="${c?c.note||'':''}" placeholder="ex: A envoyer en mars, attendre résultats...">
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-top:4px;">
+      <input type="checkbox" id="cr-note-urgente" ${c&&c.noteUrgente?'checked':''} style="width:16px;height:16px;accent-color:var(--red);">
+      <span style="color:var(--red);font-weight:500;">⚠️ Note urgente (affichée en rouge)</span>
+    </label>
+  `;
+
+  document.getElementById('cr-modal-footer').innerHTML = `
+    ${c?`<button class="btn btn-danger" onclick="deleteCr(${c.id})">Supprimer</button>`:''}
+    <button class="btn btn-secondary" onclick="closeModal('modal-cr')">Annuler</button>
+    <button class="btn btn-primary" onclick="saveCr()">Enregistrer</button>
+  `;
+  document.getElementById('modal-cr').classList.add('open');
+}
+
+function saveCr() {
+  const nom = document.getElementById('cr-nom').value.trim();
+  if(!nom) { showToast('⚠️ Nom du patient requis'); return; }
+  const data = {
+    nom,
+    dateFactu   : document.getElementById('cr-date').value,
+    orl         : document.getElementById('cr-orl').value.trim(),
+    med         : document.getElementById('cr-med').value.trim(),
+    note        : document.getElementById('cr-note').value.trim(),
+    noteUrgente : document.getElementById('cr-note-urgente').checked,
+    crOrl       : currentCrId ? crPatients.find(x=>x.id===currentCrId)?.crOrl||false : false,
+    crMed       : currentCrId ? crPatients.find(x=>x.id===currentCrId)?.crMed||false : false,
+  };
+  if(currentCrId) {
+    const i = crPatients.findIndex(x=>x.id===currentCrId);
+    crPatients[i] = {...crPatients[i], ...data};
+  } else {
+    crPatients.unshift({id:Date.now(), ...data});
+  }
+  saveCrData();
+  closeModal('modal-cr');
+  renderCrList();
+  showToast('✅ CR enregistré');
+}
+
+function deleteCr(id) {
+  id = Number(id);
+  const c = crPatients.find(x=>Number(x.id)===id);
+  if(!c) return;
+  showConfirm('Supprimer ce CR ?', c.nom+' — cette action est irréversible.', function() {
+    crPatients = crPatients.filter(x=>Number(x.id)!==id);
+    saveCrData();
+    closeModal('modal-cr');
+    renderCrList();
+    showToast('CR supprimé');
+  });
+}
+
+document.getElementById('modal-cr').addEventListener('click', function(e){ if(e.target===this) closeModal('modal-cr'); });
+
+// ══════════════════════════════
+//  RENDER ALL
+// ══════════════════════════════
+
+// ══════════════════════════════
+//  VUE D'ENSEMBLE
+// ══════════════════════════════
+function renderOverview() {
+  const el = document.getElementById('overview-content');
+  if(!el) return;
+
+  const actifs = patients.filter(p => p.status !== 'closed' && p.status !== 'rdv');
+  const rdvPris = patients.filter(p => p.status === 'rdv').length;
+  const total = patients.filter(p => p.status !== 'closed').length;
+  const tauxTransfo = total > 0 ? Math.round(rdvPris / total * 100) : 0;
+
+  // Patients sans contact depuis +15 jours
+  const today = new Date();
+  const risque = actifs.filter(p => {
+    if(!p.date) return false;
+    const debut = new Date(p.date + 'T00:00:00');
+    return Math.round((today - debut) / 86400000) > 15;
+  }).sort((a,b) => (a.date||'').localeCompare(b.date||''));
+
+  // Répartition par motif
+  const motifs = {};
+  actifs.forEach(p => {
+    const m = p.reason || 'Non précisé';
+    motifs[m] = (motifs[m]||0) + 1;
+  });
+  const motifsSorted = Object.entries(motifs).sort((a,b)=>b[1]-a[1]).slice(0,4);
+
+  // Ancienneté moyenne
+  const anciennetes = actifs.filter(p=>p.date).map(p => Math.round((today - new Date(p.date+'T00:00:00'))/86400000));
+  const ancMoy = anciennetes.length ? Math.round(anciennetes.reduce((a,b)=>a+b,0)/anciennetes.length) : 0;
+
+  // Nb de patients par niveau de relance
+  const rel1 = actifs.filter(p=>(p.attempts||[]).length===0).length;
+  const rel2 = actifs.filter(p=>(p.attempts||[]).length===1).length;
+  const rel3 = actifs.filter(p=>(p.attempts||[]).length>=2).length;
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;text-transform:uppercase;font-weight:600;">Taux de transformation</div>
+        <div style="font-size:28px;font-weight:700;color:${tauxTransfo>=30?'var(--green)':tauxTransfo>=15?'var(--amber)':'var(--red)'};">${tauxTransfo}%</div>
+        <div style="font-size:11px;color:var(--text3);">${rdvPris} RDV / ${total} patients</div>
+      </div>
+      <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;text-transform:uppercase;font-weight:600;">Ancienneté moyenne</div>
+        <div style="font-size:28px;font-weight:700;color:var(--text);">${ancMoy}j</div>
+        <div style="font-size:11px;color:var(--text3);">depuis la consultation</div>
+      </div>
+      <div style="background:${risque.length>3?'var(--red-bg)':'var(--bg)'};border-radius:var(--radius-sm);padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;text-transform:uppercase;font-weight:600;">⚠️ En risque (+15j)</div>
+        <div style="font-size:28px;font-weight:700;color:${risque.length>3?'var(--red)':'var(--text)'};">${risque.length}</div>
+        <div style="font-size:11px;color:var(--text3);">sans appareillage</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:10px;">Niveau de relance</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--green-bg);border:2px solid var(--green);flex-shrink:0;"></span>
+            <span style="flex:1;color:var(--text2);">Pas encore contactés</span>
+            <span style="font-weight:700;color:var(--text);">${rel1}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--amber-bg);border:2px solid var(--amber);flex-shrink:0;"></span>
+            <span style="flex:1;color:var(--text2);">1 tentative</span>
+            <span style="font-weight:700;color:var(--text);">${rel2}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--red-bg);border:2px solid var(--red);flex-shrink:0;"></span>
+            <span style="flex:1;color:var(--text2);">2 tentatives ou plus</span>
+            <span style="font-weight:700;color:var(--text);">${rel3}</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:10px;">Principaux motifs</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          ${motifsSorted.map(([m,n])=>`
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+            <div style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);">${m}</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:60px;height:6px;border-radius:3px;background:var(--bg);overflow:hidden;">
+                <div style="width:${Math.round(n/actifs.length*100)}%;height:100%;background:var(--accent);border-radius:3px;"></div>
+              </div>
+              <span style="font-weight:700;font-size:12px;color:var(--text);min-width:16px;">${n}</span>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    ${risque.length > 0 ? `
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;">⚠️ Patients en suivi depuis plus de 15 jours</div>
+      ${risque.slice(0,3).map(p => {
+        const jours = Math.round((today - new Date(p.date+'T00:00:00'))/86400000);
+        const tentatives = (p.attempts||[]).length;
+        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openPatientModal('+p.id+')">'
+          +'<div class="avatar av-red">'+getInitials(p.name)+'</div>'
+          +'<div style="flex:1;min-width:0;">'
+            +'<div style="font-size:13px;font-weight:600;">'+p.name+'</div>'
+            +'<div style="font-size:12px;color:var(--text2);">'+p.reason+' &nbsp;•&nbsp; '+jours+'j de suivi &nbsp;•&nbsp; '+tentatives+' tentative'+(tentatives>1?'s':'')+'</div>'
+          +'</div>'
+          +'<div style="font-size:12px;color:var(--text3);">'+p.phone+'</div>'
+        +'</div>';
+      }).join('')}
+      ${risque.length > 3 ? '<div style="font-size:12px;color:var(--text3);padding-top:8px;text-align:center;">+ '+(risque.length-3)+' autres patients à risque</div>' : ''}
+    </div>` : ''}
+  `;
+}
+
+
+async function syncNow() {
+  showSyncIndicator('🔄 Synchronisation...');
+  await loadData();
+  autoUpdateStatuses();
+  renderAll();
+  showSyncIndicator('✅ Synchronisé', 2000);
+}
+
+function renderAll() { renderPatients(); renderAvoirs(); renderOrlDashboard(); renderOrlList(); renderOverview(); renderAvisList(); renderCrList(); }
+
+// ══════════════════════════════
+//  NOTIFICATIONS
+// ══════════════════════════════
+function getPatientsDuJour() {
+  return patients.filter(p => p.status!=='closed' && p.status!=='rdv' && p.nextCall && daysDiff(p.nextCall)<=0);
+}
+
+function sendNotif(title, body) {
+  if(Notification.permission!=='granted') return;
+  const n = new Notification(title, {
+    body, requireInteraction:true,
+    icon:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>"
+  });
+  n.onclick = () => { window.focus(); n.close(); };
+}
+
+function notifierDuJour() {
+  // Rappels ORL du jour
+  const orlAujourdhui = orlRdvs.filter(r => {
+    if(r.rappelDone || r.status==='cancelled' || r.status==='done') return false;
+    if(!r.rappelProgramme) return false;
+    return orlDaysDiff(r.rappelProgramme) <= 0;
+  });
+  if(orlAujourdhui.length) {
+    const noms = orlAujourdhui.map(r=>r.patientName).join(', ');
+    sendNotif('🏥 Rappel RDV ORL', noms);
+  }
+  const liste = getPatientsDuJour();
+  if(!liste.length) return;
+  const centre = CENTRES[currentCentre].label;
+  if(liste.length===1) {
+    const p=liste[0];
+    sendNotif(`📞 Onécoute ${centre} — 1 patient à rappeler`, p.name+' — '+p.phone+(p.creneau?'\n🕐 '+p.creneau:''));
+  } else {
+    const noms = liste.slice(0,3).map(p=>p.name).join(', ')+(liste.length>3?' (+'+(liste.length-3)+' autres)':'');
+    sendNotif(`📞 Onécoute ${centre} — ${liste.length} patients à rappeler`, noms);
+  }
+}
+
+async function demanderPermissionEtNotifier() {
+  if(!('Notification' in window)) return;
+  if(Notification.permission==='granted') { notifierDuJour(); programmer9h(); }
+  else if(Notification.permission!=='denied') {
+    const p = await Notification.requestPermission();
+    if(p==='granted') { notifierDuJour(); programmer9h(); }
+  } else {
+    const l = getPatientsDuJour();
+    if(l.length) showToast('📞 '+l.length+' patient(s) à rappeler aujourd\'hui');
+  }
+}
+
+function programmer9h() {
+  const now=new Date(), cible=new Date();
+  cible.setHours(9,0,0,0);
+  if(now>=cible) cible.setDate(cible.getDate()+1);
+  setTimeout(()=>{ autoUpdateStatuses(); notifierDuJour(); programmer9h(); }, cible-now);
+}
+
+// ══════════════════════════════
+//  INIT
+// ══════════════════════════════
+if(!checkSession()) {
+  document.getElementById('login-screen').style.display='flex';
+}
+</script>
+</body>
+</html>
